@@ -125,7 +125,8 @@
     .side:not(.open) .side-body { display:none; }
     .side-body { padding:0 12px 12px; display:flex; flex-direction:column; }
     .side-body > * { flex-shrink:0; }
-    #info { order:-1; margin-bottom:12px; }   /* destinations first, then controls and key */
+    #controls { order:-2; }                     /* Top 10 / 25 / All 99 first, */
+    #info { order:-1; margin-bottom:12px; }   /* then destinations, then the key */
     .seg button, .btn { min-height:44px; }
     #list tr.row td { height:44px; }
     #list tr.extra { display:none; }
