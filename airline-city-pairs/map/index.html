@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Air Travel Connections Among the Top 100 U.S. City Markets</title>
+<meta name="description" content="Interactive map of domestic air journeys between the 100 busiest U.S. city markets, July 2025–June 2026, from the BTS DB1C Market survey.">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+  :root { --ink:#1f2933; --muted:#52606d; --line:#d9dee3; --arc:#eb6834; --sel:#26313b; }
+  html, body { margin:0; height:100%; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); background:#f2f3f0; }
+  #map { position:absolute; inset:0; }
+  .panel { position:absolute; z-index:2; top:12px; left:12px; width:340px; max-width:calc(100vw - 24px); max-height:calc(100vh - 24px);
+           box-sizing:border-box; display:flex; flex-direction:column; background:#fffffff2; padding:12px 14px; border-radius:8px;
+           box-shadow:0 2px 12px #0002; font-size:13px; line-height:1.45; }
+  .panel h1 { font-size:15px; margin:0; }
+  .date { font-size:12px; color:var(--muted); margin:0 0 8px; }
+  .sub { color:var(--muted); margin-bottom:8px; }
+  .sub .short { display:none; }
+  .body { display:flex; flex-direction:column; min-height:0; }
+  .panel > *, .body > * { flex-shrink:0; }
+  .panel > .body, .body > #info { flex-shrink:1; }
+  .scale-title { font-size:12px; font-weight:600; margin-bottom:4px; }
+  .scale { display:flex; height:14px; border-radius:3px; overflow:hidden; }
+  .scale span { flex:1; }
+  .ticks { position:relative; height:16px; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; margin-bottom:4px; }
+  .ticks span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap; }
+  .ticks span:first-child { transform:none; } .ticks span:last-child { transform:translateX(-100%); }
+  .seg { display:flex; margin:6px 0 8px; border:1px solid #c5ccd3; border-radius:6px; overflow:hidden; }
+  .seg button { flex:1; border:0; background:#fff; padding:5px 0; font:inherit; color:var(--muted); cursor:pointer; }
+  .seg button + button { border-left:1px solid #c5ccd3; }
+  .seg button[aria-pressed="true"] { background:var(--ink); color:#fff; font-weight:600; }
+  .seg-label { font-size:12px; font-weight:600; }
+  #q { width:100%; box-sizing:border-box; padding:6px 8px; border:1px solid #ccd; border-radius:6px; font:inherit; }
+  #info { margin-top:8px; border-top:1px solid #e4e7eb; padding-top:8px; display:flex; flex-direction:column; min-height:0; }
+  #info h2 { font-size:15px; margin:0; display:flex; align-items:baseline; gap:6px; }
+  #info h2 button { margin-left:auto; border:0; background:none; font-size:18px; line-height:1; cursor:pointer; color:var(--muted); }
+  .meta { color:var(--muted); font-size:12px; margin:2px 0 6px; }
+  .pin { font-size:11px; color:var(--muted); font-weight:400; }
+  #list { overflow-y:auto; min-height:0; margin:0 -4px; }
+  #list table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+  #list th { position:sticky; top:0; background:#fff; font-size:11px; font-weight:600; color:var(--muted); text-align:right; padding:2px 4px; }
+  #list th:nth-child(2) { text-align:left; }
+  #list td { padding:2px 4px; text-align:right; white-space:nowrap; }
+  #list td:nth-child(2) { text-align:left; white-space:normal; }
+  #list td:first-child, #list th:first-child { color:var(--muted); width:1%; }
+  #list tr.row { cursor:pointer; }
+  #list tr.row:hover td, #list tr.hl td { background:#fdeee7; }
+  #list tr.cut td { border-top:1px dashed #c5ccd3; }
+  .barcell { width:64px; }
+  .bar { height:8px; background:var(--arc); border-radius:0 2px 2px 0; }
+  .empty { color:var(--muted); }
+  .note { color:var(--muted); font-size:12px; margin-top:8px; }
+  .note a, #about a { color:#1d5fa8; }
+  #toggle { display:none; }
+  #status { color:var(--muted); font-size:12px; margin-top:6px; }
+  .maplibregl-popup-content { font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; padding:8px 12px; }
+  .muted { color:var(--muted); }
+  #about { width:min(680px, calc(100vw - 32px)); max-height:calc(100vh - 48px); box-sizing:border-box; padding:0;
+           border:0; border-radius:10px; box-shadow:0 10px 40px #0005; color:var(--ink); }
+  #about::backdrop { background:#1f293366; }
+  #about .head { position:sticky; top:0; display:flex; align-items:center; padding:14px 20px; background:#fff; border-bottom:1px solid #e4e7eb; }
+  #about .head h2 { font-size:17px; margin:0; }
+  #about .head button { margin-left:auto; border:0; background:none; font-size:22px; line-height:1; cursor:pointer; color:var(--muted); }
+  #about .content { padding:4px 20px 20px; font-size:14px; line-height:1.55; }
+  #about h3 { font-size:14px; margin:18px 0 4px; }
+  #about p, #about ul { margin:4px 0 8px; }
+  #about ul { padding-left:20px; }
+  @media (max-width:600px) {
+    .panel { top:8px; left:8px; right:8px; width:auto; max-height:55vh; padding:8px 10px; font-size:12px; line-height:1.35; }
+    .panel h1 { font-size:13px; padding-right:28px; }
+    .date { font-size:11px; margin-bottom:6px; }
+    .sub .long { display:none; } .sub .short { display:inline; }
+    #q { font-size:16px; padding:4px 8px; }   /* 16px stops iOS zooming in on focus */
+    #toggle { display:block; position:absolute; top:4px; right:6px; border:0; background:none; font-size:18px; cursor:pointer; padding:4px; }
+    .panel.collapsed .body { display:none; }
+    .maplibregl-ctrl-top-right { display:none; }
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel" id="panel">
+  <button id="toggle" aria-label="Show or hide panel" aria-expanded="true">☰</button>
+  <h1>Air travel between the 100 busiest U.S. city markets</h1>
+  <div class="date" id="period">July 2025–June 2026</div>
+  <div class="body">
+    <div class="sub">
+      <span class="long">Domestic origin–destination air journeys, both directions combined, connecting trips included. Hover over a city market (tap on a phone) to see its connections with the other 99; click to keep it selected.</span>
+      <span class="short">Domestic O&amp;D air journeys, both directions. Tap a city market to see its connections with the other 99.</span>
+    </div>
+    <div class="scale-title" id="scale-title"></div>
+    <div class="scale" id="scale"></div>
+    <div class="ticks" id="ticks"></div>
+    <div class="seg-label">Lines</div>
+    <div class="seg" role="group" aria-label="Number of connections drawn">
+      <button data-n="10" aria-pressed="true">Top 10</button><button data-n="25" aria-pressed="false">Top 25</button><button data-n="99" aria-pressed="false">All 99</button>
+    </div>
+    <input id="q" list="names" placeholder="Find a city market, e.g. Denver" autocomplete="off">
+    <datalist id="names"></datalist>
+    <div id="info"></div>
+    <div class="note"><a href="../">Top 100 pairs table</a> · <a href="#" id="about-open">Methodology &amp; sources</a></div>
+    <div id="status">Loading data…</div>
+  </div>
+</div>
+<dialog id="about">
+  <div class="head"><h2>Methodology &amp; sources</h2><button id="about-close" aria-label="Close">×</button></div>
+  <div class="content">
+    <p>The map shows the 100 busiest U.S. domestic air city markets and the passenger journeys between every pair of them: 4,950 pairs in all. It uses the same data and definitions as the <a href="../">top 100 pairs table</a>.</p>
+    <h3>What is counted</h3>
+    <ul>
+      <li>Each BTS DB1C Market record is one passenger origin–destination journey within BTS market boundaries. A New York–Atlanta–Orlando connection counts only between New York and Orlando.</li>
+      <li>Both directions are combined, and a round trip normally counts once in each direction. These are journeys, not unique people.</li>
+      <li>DB1C is a 40% ticket sample; each sampled record is multiplied by 2.5. The 12 monthly files for reporting months July 2025–June 2026 are summed.</li>
+      <li>Trips that start and end in the same city market are excluded. Domestic includes Alaska, Hawaii, and U.S. territories; trips on international tickets are not counted.</li>
+    </ul>
+    <h3>Choosing the 100 markets</h3>
+    <ul>
+      <li>A city market's total is the sum of its journeys with every other market (all 1,000+ markets, not just the top 100). The 100 largest totals are mapped.</li>
+      <li>Pairs among these 100 markets carry 88% of all domestic journeys. A few pairs (183) have no sampled journeys and show as 0.</li>
+      <li>"% of journeys" in the list is the pair's share of the selected market's total, including its journeys to markets outside the top 100.</li>
+      <li>"With stops" is the share of the pair's journeys with a change of flight (two or more flight coupons).</li>
+    </ul>
+    <h3>Geography</h3>
+    <ul>
+      <li>Airports are grouped using BTS city markets, as in the table (e.g., New York City = JFK, EWR, LGA, HPN, ISP, SWF; Los Angeles = LAX, SNA, BUR, ONT, LGB). Orlando Sanford (SFB) and West Palm Beach (PBI) are separate BTS markets.</li>
+      <li>Each market is drawn as the Census Bureau's 2025 core-based statistical areas (CBSAs; metropolitan and micropolitan areas) that contain its airports, the same boundaries used in the <a href="https://ryanradia.github.io/housingcost/" target="_blank" rel="noopener">housing cost map</a>. Airports with under 0.25% of a market's journeys don't add an area.</li>
+      <li>Where two markets have airports in the same CBSA, the CBSA is split by county: a county with an airport goes to that airport's market, and the rest go to the larger market. This affects three CBSAs: Miami (Palm Beach County → West Palm Beach), Orlando (Seminole County → Sanford), and Riverside–San Bernardino (San Bernardino County → Los Angeles via ONT; Riverside County → Palm Springs).</li>
+      <li>St. Thomas is in no CBSA and is drawn as St. Thomas Island. A market's shape shows where its airports are, not where its travelers live.</li>
+      <li>Lines run between traffic-weighted airport locations along great circles. Line width shows journeys.</li>
+    </ul>
+    <h3>Sources</h3>
+    <ul>
+      <li><a href="https://www.bts.gov/topics/airlines-and-airports/origin-and-destination-survey-data-market" target="_blank" rel="noopener">BTS DB1C Market data</a> and <a href="https://www.bts.gov/sites/bts.dot.gov/files/DB1C_Description_for_Market.pdf" target="_blank" rel="noopener">record description</a></li>
+      <li>CBSA and county boundaries: U.S. Census Bureau, 2025 cartographic boundary files (cb_2025_us_cbsa_500k, cb_2025_us_county_500k)</li>
+      <li>Airport locations: BTS National Transportation Atlas Database, Aviation Facilities; FAA airport reference points for PBI and AZA</li>
+      <li>Basemap: <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> (Positron style) © OpenMapTiles © OpenStreetMap contributors, rendered with <a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre GL JS</a></li>
+      <li>Code, results, and detailed methods are in this site's GitHub repository (README and METHODS.md).</li>
+    </ul>
+  </div>
+</dialog>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const BLUES = ['#b7d3f6', '#86b6ef', '#5598e7', '#2a78d6', '#1c5cab', '#104281'];
+const ZERO = '#e4e7eb', SEL = '#26313b', ARC = '#eb6834';
+// market totals (default view) and pair journeys (selected view); a bin holds values at or above its cut
+const TOTAL_CUTS = [2.5e6, 5e6, 10e6, 20e6, 40e6];
+const PAIR_CUTS = [50e3, 150e3, 400e3, 1e6, 2e6];
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const short = n => n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : String(Math.round(n));
+const pct = r => (r * 100).toFixed(1) + '%';
+const $ = id => document.getElementById(id);
+
+function legend(selected) {
+  const cuts = selected ? PAIR_CUTS : TOTAL_CUTS;
+  $('scale-title').textContent = selected ? `Journeys with ${selected.name}` : 'Total journeys, all domestic markets';
+  $('scale').innerHTML = (selected ? [ZERO, ...BLUES] : BLUES).map(c => `<span style="background:${c}"></span>`).join('');
+  const n = BLUES.length + (selected ? 1 : 0);
+  const labels = selected ? ['0', ...cuts.map(short), ''] : ['', ...cuts.map(short), ''];
+  $('ticks').innerHTML = labels.map((l, i) => {
+    if (!l) return '';
+    const left = selected && i === 0 ? 100 / n / 2 : (i + (selected ? 1 : 0)) / n * 100;
+    return `<span style="left:${left}%;transform:translateX(-50%)">${l}</span>`;
+  }).join('');
+}
+
+function unpack(g) {
+  return g.map(poly => poly.map(r => {
+    const out = []; let x = 0, y = 0;
+    for (let j = 0; j < r.length; j += 2) { x += r[j]; y += r[j + 1]; out.push([x / 1e4, y / 1e4]); }
+    return out;
+  }));
+}
+
+// great-circle points between two [lng, lat] positions
+function arc(a, b, steps = 48) {
+  const rad = Math.PI / 180, toXYZ = ([lng, lat]) => [Math.cos(lat * rad) * Math.cos(lng * rad), Math.cos(lat * rad) * Math.sin(lng * rad), Math.sin(lat * rad)];
+  const p = toXYZ(a), q = toXYZ(b);
+  const d = Math.acos(Math.min(1, p[0] * q[0] + p[1] * q[1] + p[2] * q[2]));
+  if (d < 1e-6) return [a, b];
+  const out = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps, s1 = Math.sin((1 - t) * d) / Math.sin(d), s2 = Math.sin(t * d) / Math.sin(d);
+    const x = s1 * p[0] + s2 * q[0], y = s1 * p[1] + s2 * q[1], z = s1 * p[2] + s2 * q[2];
+    out.push([Math.atan2(y, x) / rad, Math.atan2(z, Math.hypot(x, y)) / rad]);
+  }
+  return out;
+}
+
+const wide = window.innerWidth > 600;
+const map = new maplibregl.Map({
+  container:'map',
+  style:'https://tiles.openfreemap.org/styles/positron',
+  bounds:[[-125, 24.5], [-66.5, 49.5]],
+  fitBoundsOptions:{ padding: wide ? { top:20, bottom:20, left:370, right:20 }
+    : { top:$('panel').offsetHeight + 16, bottom:20, left:10, right:10 } },
+  maxBounds:[[-200, 5], [-40, 75]],
+  minZoom:1.5, maxZoom:10,
+});
+map.addControl(new maplibregl.NavigationControl({ showCompass:false }), 'top-right');
+
+const data = fetch('markets.json').then(r => {
+  if (!r.ok) throw new Error(`Could not load markets.json (HTTP ${r.status}).`);
+  return r.json();
+});
+data.catch(err => { $('status').textContent = err.message; $('status').style.color = '#b42318'; });
+
+map.on('load', async () => {
+  const D = await data;
+  const M = D.markets, N = M.length;
+  const [y0, m0] = D.period.split('_to_')[0].split('-'), [y1, m1] = D.period.split('_to_')[1].split('-');
+  const month = (y, m) => new Date(+y, +m - 1).toLocaleString('en-US', { month:'long' }) + ' ' + y;
+  $('period').textContent = `${month(y0, m0)}–${month(y1, m1)}`;
+  const J = new Float64Array(N * N), C = new Float64Array(N * N);   // journeys, share connecting
+  D.pairs.forEach(([i, j, t, c]) => { J[i * N + j] = J[j * N + i] = t; C[i * N + j] = C[j * N + i] = c; });
+  const partners = i => [...Array(N).keys()].filter(j => j !== i).sort((a, b) => J[i * N + b] - J[i * N + a] || a - b);
+
+  const fc = feats => ({ type:'FeatureCollection', features:feats });
+  map.addSource('mkts', { type:'geojson', data:fc(M.map((m, i) => ({ type:'Feature', id:i,
+    properties:{ name:m.name, total:m.total, rank:m.rank }, geometry:{ type:'MultiPolygon', coordinates:unpack(m.g) } }))) });
+  map.addSource('pts', { type:'geojson', data:fc(M.map((m, i) => ({ type:'Feature', id:i,
+    properties:{ name:m.name, rank:m.rank }, geometry:{ type:'Point', coordinates:[m.lng, m.lat] } }))) });
+  map.addSource('arcs', { type:'geojson', data:fc([]) });
+
+  if (map.getLayer('landuse_residential')) map.setLayoutProperty('landuse_residential', 'visibility', 'none');
+  // the market labels replace the basemap's city and town names
+  map.getStyle().layers.forEach(l => {
+    if (l.type === 'symbol' && l['source-layer'] === 'place' && !/country|state|continent/.test(l.id)) map.setLayoutProperty(l.id, 'visibility', 'none');
+  });
+  const step = (v, cuts) => ['step', v, BLUES[0], ...cuts.flatMap((c, k) => [c, BLUES[k + 1]])];
+  const totalFill = step(['get', 'total'], TOTAL_CUTS);
+  const pairFill = ['case', ['boolean', ['feature-state', 'sel'], false], SEL,
+    ['<=', ['coalesce', ['feature-state', 'v'], 0], 0], ZERO, step(['coalesce', ['feature-state', 'v'], 0], PAIR_CUTS)];
+  map.addLayer({ id:'fill', type:'fill', source:'mkts', paint:{ 'fill-color':totalFill, 'fill-opacity':0.85 } }, 'water');
+  map.addLayer({ id:'edge', type:'line', source:'mkts', paint:{ 'line-color':'#ffffff', 'line-width':0.8 } }, 'water');
+  map.addLayer({ id:'arc-casing', type:'line', source:'arcs', layout:{ 'line-cap':'round' },
+    paint:{ 'line-color':'#fff', 'line-opacity':0.9, 'line-width':['+', ['get', 'w'], 1.5] } });
+  map.addLayer({ id:'arc', type:'line', source:'arcs', layout:{ 'line-cap':'round' },
+    paint:{ 'line-color':['case', ['get', 'hl'], SEL, ['get', 'top100'], '#26313b', ARC],
+            'line-opacity':['case', ['get', 'top100'], 0.45, 0.9], 'line-width':['get', 'w'] } });
+  map.addLayer({ id:'hover-edge', type:'line', source:'mkts',
+    paint:{ 'line-color':SEL, 'line-width':2, 'line-opacity':['case', ['boolean', ['feature-state', 'hover'], false], 1, 0] } });
+  map.addLayer({ id:'dot', type:'circle', source:'pts',
+    paint:{ 'circle-radius':['interpolate', ['linear'], ['zoom'], 3, 2, 8, 4], 'circle-color':SEL, 'circle-stroke-color':'#fff', 'circle-stroke-width':1 } });
+  map.addLayer({ id:'label', type:'symbol', source:'pts',
+    layout:{ 'text-field':['get', 'name'], 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 3, 10, 7, 13],
+             'text-variable-anchor':['top', 'bottom', 'left', 'right'], 'text-radial-offset':0.5, 'text-max-width':9,
+             'symbol-sort-key':['get', 'rank'], 'text-padding':3 },
+    paint:{ 'text-color':SEL, 'text-halo-color':'#fff', 'text-halo-width':1.6 } });
+
+  // default lines: the 100 busiest pairs in the matrix
+  const allPairs = D.pairs.slice().sort((a, b) => b[2] - a[2]);
+  const width = (t, max) => 0.6 + 7 * Math.sqrt(t / max);
+  const defaultArcs = fc(allPairs.slice(0, 100).reverse().map(([i, j, t]) => ({ type:'Feature',
+    properties:{ w:width(t, allPairs[0][2]) * 0.6, top100:true, hl:false }, geometry:{ type:'LineString', coordinates:arc([M[i].lng, M[i].lat], [M[j].lng, M[j].lat]) } })));
+
+  let nShow = 10, current, pinned = false, hoverPartner = null;
+  const tip = new maplibregl.Popup({ closeButton:false, closeOnClick:false, offset:12, maxWidth:'280px' });
+
+  function select(i, pin) {
+    if (pin !== undefined) pinned = pin;
+    if (i === current) { drawArcs(); return; }
+    if (current != null) map.setFeatureState({ source:'mkts', id:current }, { hover:false });
+    current = i; hoverPartner = null;
+    for (let j = 0; j < N; j++) map.setFeatureState({ source:'mkts', id:j }, { sel:j === i, v:i === null ? 0 : J[i * N + j] });
+    if (i === null) {
+      map.setPaintProperty('fill', 'fill-color', totalFill);
+      map.getSource('arcs').setData(defaultArcs);
+      legend(null);
+      $('info').innerHTML = `<div class="empty">Lines show the 100 busiest pairs. Hover over or search for a market to see its connections.</div>`;
+      return;
+    }
+    map.setFeatureState({ source:'mkts', id:i }, { hover:true });
+    map.setPaintProperty('fill', 'fill-color', pairFill);
+    legend(M[i]);
+    drawArcs(); renderList();
+  }
+
+  function drawArcs() {
+    if (current === null) return;
+    const i = current, ps = partners(i).slice(0, nShow).filter(j => J[i * N + j] > 0);
+    const max = J[i * N + partners(i)[0]] || 1;
+    map.getSource('arcs').setData(fc(ps.reverse().map(j => ({ type:'Feature',
+      properties:{ w:width(J[i * N + j], max), top100:false, hl:j === hoverPartner },
+      geometry:{ type:'LineString', coordinates:arc([M[i].lng, M[i].lat], [M[j].lng, M[j].lat]) } }))));
+  }
+
+  function renderList() {
+    const i = current, m = M[i], ps = partners(i), max = J[i * N + ps[0]] || 1;
+    const inTop = ps.reduce((s, j) => s + J[i * N + j], 0);
+    $('info').innerHTML = `<h2>${m.name} <span class="pin">${pinned ? 'selected' : ''}</span>
+        ${pinned ? '<button id="clear" aria-label="Clear selection">×</button>' : ''}</h2>
+      <div class="meta">#${m.rank} of 100 · ${fmt(m.total)} journeys with all markets, ${pct(inTop / m.total)} with these 99<br>
+        Airports: ${m.airports.join(', ')}<br>${m.areas.join('; ')}</div>
+      <div id="list"><table><thead><tr><th>#</th><th>Connection</th><th>Journeys</th><th title="Share of ${m.name}'s journeys">% of total</th><th title="Share of journeys with a change of flight">With stops</th><th class="barcell"></th></tr></thead><tbody>
+      ${ps.map((j, r) => { const t = J[i * N + j]; return `<tr class="row${r === nShow ? ' cut' : ''}" data-j="${j}"><td>${r + 1}</td><td>${M[j].name}</td><td>${fmt(t)}</td>
+        <td>${pct(t / m.total)}</td><td>${t ? pct(C[i * N + j]) : '–'}</td><td class="barcell"><div class="bar" style="width:${t / max * 100}%"></div></td></tr>`; }).join('')}
+      </tbody></table></div>`;
+    $('list').querySelectorAll('tr.row').forEach(tr => {
+      tr.addEventListener('click', () => select(+tr.dataset.j, true));
+      tr.addEventListener('mouseenter', () => { hoverPartner = +tr.dataset.j; drawArcs(); });
+      tr.addEventListener('mouseleave', () => { hoverPartner = null; drawArcs(); });
+    });
+    const c = $('clear'); if (c) c.addEventListener('click', () => select(null, false));
+  }
+
+  function pairTip(i, j) {
+    const t = J[i * N + j], rank = partners(i).indexOf(j) + 1;
+    return `<b>${M[i].name} ↔ ${M[j].name}</b><br>${fmt(t)} journeys${t ? ` · ${pct(C[i * N + j])} with stops` : ''}<br>
+      <span class="muted">#${rank} of ${M[i].name}'s 99 connections · #${partners(j).indexOf(i) + 1} of ${M[j].name}'s</span>`;
+  }
+
+  map.on('mousemove', 'fill', e => {
+    const j = e.features[0].id;
+    map.getCanvas().style.cursor = 'pointer';
+    if (!pinned) select(j);
+    if (current !== null && j !== current) {
+      tip.setLngLat(e.lngLat).setHTML(pairTip(current, j)).addTo(map);
+      if (hoverPartner !== j) { hoverPartner = j; drawArcs(); }
+    } else {
+      tip.setLngLat(e.lngLat).setHTML(`<b>${M[j].name}</b><br>${fmt(M[j].total)} journeys · #${M[j].rank} of 100<br>
+        <span class="muted">${pinned ? 'Click to select instead' : 'Click to keep selected'}</span>`).addTo(map);
+      if (hoverPartner !== null) { hoverPartner = null; drawArcs(); }
+    }
+  });
+  map.on('mouseleave', 'fill', () => {
+    map.getCanvas().style.cursor = ''; tip.remove();
+    if (!pinned) select(null); else if (hoverPartner !== null) { hoverPartner = null; drawArcs(); }
+  });
+  map.on('click', e => {
+    const f = map.queryRenderedFeatures(e.point, { layers:['fill'] })[0];
+    if (!f) { select(null, false); tip.remove(); return; }
+    if (pinned && f.id === current) { select(null, false); return; }
+    select(f.id, true); renderList();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('about').open) select(null, false); });
+
+  document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => {
+    nShow = +b.dataset.n;
+    document.querySelectorAll('[data-n]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    drawArcs(); if (current !== null) renderList();
+  }));
+
+  const byName = Object.fromEntries(M.map((m, i) => [m.name.toLowerCase(), i]));
+  $('names').innerHTML = M.map(m => `<option value="${m.name}">`).join('');
+  const q = $('q');
+  const go = () => {
+    const v = q.value.trim().toLowerCase();
+    const i = v in byName ? byName[v] : M.findIndex(m => m.name.toLowerCase().includes(v) || m.airports.some(a => a.toLowerCase() === v));
+    if (!v || i < 0) { q.style.borderColor = '#b42318'; return; }
+    select(i, true); renderList(); q.blur();
+  };
+  q.addEventListener('change', go);
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  q.addEventListener('input', () => q.style.borderColor = '');
+
+  $('status').remove();
+  const start = new URLSearchParams(location.search).get('m');
+  select(null, false);
+  if (start) { q.value = start; go(); }
+});
+
+const about = $('about');
+$('about-open').addEventListener('click', e => { e.preventDefault(); about.showModal(); });
+$('about-close').addEventListener('click', () => about.close());
+about.addEventListener('click', e => { if (e.target === about) about.close(); });
+$('toggle').addEventListener('click', e => {
+  const collapsed = $('panel').classList.toggle('collapsed');
+  e.currentTarget.setAttribute('aria-expanded', String(!collapsed));
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "months_used": [
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ],
+  "months_missing": [],
+  "final": true,
+  "expansion_factor": 2.5,
+  "passengers_values_seen": [
+    1.0
+  ],
+  "each_month_once": true,
+  "no_reversed_duplicate_pairs": true,
+  "no_same_market_pairs": true,
+  "total_equals_components_max_abs_err": 0.0,
+  "percent_in_0_100": true,
+  "top100_pct_recompute_max_err": 0.0,
+  "retained_est_equals_pair_sum": true,
+  "stages_reconcile_to_raw": true,
+  "crosswalk_one_row_per_airport": true,
+  "mktid_unique_within_month": true,
+  "itinid_period_prefix_mismatch_rows": 0,
+  "reference_airports_absent_from_data": [],
+  "display_rows_with_rounding_reconciliation": 32,
+  "schema_variants": 1,
+  "stage_totals": [
+    {
+      "stage": "invalid endpoint",
+      "records": 1429,
+      "sample_pax": 1429.0,
+      "est_pax": 3572.5
+    },
+    {
+      "stage": "retained",
+      "records": 244484392,
+      "sample_pax": 244484392.0,
+      "est_pax": 611210980.0
+    },
+    {
+      "stage": "same analysis market",
+      "records": 610316,
+      "sample_pax": 610316.0,
+      "est_pax": 1525790.0
+    }
+  ],
+  "top100_markets_using_fallback_names": [],
+  "generated_utc": "2026-10-31T07:23:15+00:00"
+}

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Top Airline City Pairs</title>
+<meta name="description" content="__SUBTITLE__">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #333; --ink-strong: #181818; --muted: #6a6a6a; --faint: #949494; --accent: #1d81a2;
+    --rule: #d9d9d9; --rule-strong: #333; --stripe: #f4f4f4; --hover: #e9eef2;
+    --mark: #fff0a8; --bg: #fff; --link: #1d5fa8;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: light; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 16px 40px; }
+  h1 { margin: 0; color: var(--ink-strong); font-size: 24px; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .period { margin: 4px 0 0; color: var(--accent); font-size: 17px; font-weight: 500; }
+  .sub { margin: 8px 0 18px; color: var(--muted); font-size: 15px; max-width: 72ch; }
+  .warn { background: #fff4d6; border: 1px solid #e8cf86; padding: 8px 12px; border-radius: 3px; margin: 0 0 14px; }
+  a { color: var(--link); }
+
+  .toolbar { display: flex; align-items: center; gap: 10px 12px; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; }
+  .search { position: relative; flex: 1 1 260px; max-width: 320px; }
+  .search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
+  .search input { width: 100%; font: inherit; padding: 7px 10px 7px 32px; border: 1px solid #c8c8c8; border-radius: 3px; background: #fff; color: var(--ink); }
+  .search input:focus, .sort select:focus { outline: 2px solid #9cc7d6; outline-offset: 0; border-color: #7fb2c4; }
+  .sort { display: none; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+  .sort select { font: inherit; font-size: 16px; padding: 6px 8px; border: 1px solid #c8c8c8; border-radius: 3px; background: #fff; color: var(--ink); }
+  .count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+  /* desktop table */
+  .scroller { position: relative; max-height: min(72vh, 760px); overflow: auto; border-bottom: 1px solid var(--rule);
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  table { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+  thead th { position: sticky; top: 0; z-index: 2; background: var(--bg); text-align: left; vertical-align: bottom;
+    font-weight: 700; color: var(--ink-strong); font-size: 13px; line-height: 1.25; padding: 10px 8px 8px;
+    border-bottom: 2px solid var(--rule-strong); }
+  th button { all: unset; cursor: pointer; display: inline-flex; align-items: flex-end; gap: 4px; }
+  th button:focus-visible { outline: 2px solid #9cc7d6; outline-offset: 2px; }
+  th .arrow { width: 8px; color: var(--faint); font-size: 9px; line-height: 13px; }
+  th[aria-sort] .arrow { color: var(--ink-strong); }
+  th.num, td.num { text-align: right; }
+  th.num button { justify-content: flex-end; }
+  td { padding: 7px 8px; border-bottom: 1px solid #ececec; }
+  tbody tr:nth-child(even) td { background: var(--stripe); }
+  tbody tr:hover td { background: var(--hover); }
+  td.rank { color: var(--muted); width: 44px; }
+  td.city { font-weight: 500; color: var(--ink-strong); white-space: nowrap; }
+  td.big { color: var(--ink-strong); }
+  mark { background: var(--mark); color: inherit; padding: 0 1px; border-radius: 2px; }
+  .empty { text-align: center; color: var(--muted); padding: 28px 8px; }
+
+  /* phone cards */
+  .cards { display: none; list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--rule-strong); border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+  .card { display: grid; grid-template-columns: 30px 1fr; column-gap: 6px; padding: 10px 4px 10px 2px; border-bottom: 1px solid #ececec; }
+  .card:last-child { border-bottom: 0; }
+  .card:nth-child(even) { background: var(--stripe); }
+  .card .rk { grid-row: span 3; color: var(--muted); text-align: right; padding-top: 1px; }
+  .card .pair { font-weight: 500; color: var(--ink-strong); line-height: 1.3; }
+  .card .pair .dash { color: var(--faint); font-weight: 400; padding: 0 3px; }
+  .card .tot { margin-top: 3px; color: var(--muted); }
+  .card .tot b { font-size: 16px; color: var(--ink-strong); }
+  .card .stats { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+  .card .stats b { color: var(--ink); font-weight: 500; }
+
+  .notes { margin-top: 14px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .notes p { margin: 0 0 6px; }
+  .meta { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .meta a { color: var(--link); }
+
+  /* methodology dialog */
+  #about { width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 0;
+    border-radius: 10px; box-shadow: 0 10px 40px #0005; color: var(--ink); }
+  #about::backdrop { background: #1f293366; }
+  #about .head { position: sticky; top: 0; display: flex; align-items: center; padding: 14px 20px; background: #fff; border-bottom: 1px solid #e4e7eb; }
+  #about .head h2 { font-size: 17px; margin: 0; color: var(--ink-strong); }
+  #about .head button { margin-left: auto; border: 0; background: none; font-size: 24px; line-height: 1; cursor: pointer; color: var(--muted); padding: 0 2px; }
+  #about .content { padding: 4px 20px 20px; font-size: 14px; line-height: 1.55; }
+  #about h3 { font-size: 14px; margin: 18px 0 4px; color: var(--ink-strong); }
+  #about p, #about ul { margin: 4px 0 8px; }
+  #about ul { padding-left: 20px; }
+  #about li { margin-bottom: 4px; }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 16px 12px 32px; }
+    h1 { font-size: 19px; }
+    .period { font-size: 15px; }
+    .sub { font-size: 13.5px; margin-bottom: 12px; }
+    .search { flex-basis: 100%; max-width: none; }
+    .search input { font-size: 16px; }   /* 16px stops iOS zooming in on focus */
+    .sort { display: flex; }
+    .scroller { display: none; }
+    .cards { display: block; }
+    .notes, .meta { font-size: 11.5px; }
+    #about .content { padding: 4px 16px 16px; font-size: 13.5px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  __WARNING__
+  <h1>__TITLE__</h1>
+  <p class="period">__PERIOD__</p>
+  <p class="sub">__SUBTITLE__</p>
+
+  <div class="toolbar">
+    <label class="search">
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.6 10.6 15 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Search city markets" aria-label="Search city markets" autocomplete="off">
+    </label>
+    <label class="sort">Sort
+      <select id="sort" aria-label="Sort by">
+        <option value="0:asc">Rank</option>
+        <option value="5:desc">Highest % with stops</option>
+        <option value="5:asc">Lowest % with stops</option>
+        <option value="1:asc">City market 1, A–Z</option>
+        <option value="2:asc">City market 2, A–Z</option>
+      </select>
+    </label>
+    <span class="count" id="count" aria-live="polite"></span>
+  </div>
+
+  <div class="scroller" tabindex="0" aria-label="Top 100 city pairs table">
+    <table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+  <ol class="cards" id="cards" aria-label="Top 100 city pairs"></ol>
+
+  <div class="notes">__NOTES__</div>
+  <div class="meta">
+    <span>__SOURCE__</span>
+    <a href="#" id="about-open">Methodology &amp; sources</a>
+    <a href="__CSV__" download>Get the data (CSV)</a>
+  </div>
+</main>
+
+<dialog id="about">
+  <div class="head"><h2>Methodology &amp; sources</h2><button id="about-close" aria-label="Close">×</button></div>
+  <div class="content">
+    <h3>What is counted</h3>
+    <ul>
+      <li>Each BTS DB1C Market record is one passenger origin–destination journey within BTS market boundaries. A New York–Atlanta–Orlando connection counts only in the New York–Orlando market.</li>
+      <li>Both directions are combined into one pair, and a round trip normally counts once in each direction. These are journeys, not unique people. Average daily journeys each way = 12-month journeys ÷ 365 ÷ 2.</li>
+      <li>Trips that start and end in the same city market are excluded, as are a few rail code-share points with no BTS airport ID (e.g., New York Penn Station).</li>
+    </ul>
+    <h3>Sample and period</h3>
+    <ul>
+      <li>DB1C is a 40% ticket sample. Each sampled record is multiplied by 2.5.</li>
+      <li>The 12 monthly files for reporting months July 2025–June 2026 are summed. Nothing is annualized.</li>
+    </ul>
+    <h3>“With stops”</h3>
+    <ul>
+      <li>Trips with a change of flight: markets with two or more flight coupons. Trips on one coupon count as no stops, including the small share of through flights with an intermediate stop on the same flight (about 0.3–0.4%).</li>
+      <li>The percentage is computed from the pooled 12-month totals.</li>
+    </ul>
+    <h3>City markets</h3>
+    <ul>
+      <li>Airports are grouped using BTS city markets throughout, with no metro-area adjustments. Examples: New York City = JFK, EWR, LGA, HPN, ISP, SWF; Los Angeles = LAX, SNA, BUR, ONT, LGB; Chicago = ORD, MDW; Washington - Baltimore = BWI, DCA, IAD; Miami - Fort Lauderdale = MIA, FLL. West Palm Beach, Orlando Sanford (SFB), and Paine Field (PAE) are separate BTS markets.</li>
+      <li>City market 1 is the market with more total air journeys across all pairs. The order does not affect the counts.</li>
+      <li>Domestic includes Alaska, Hawaii, and U.S. territories. Trips on international tickets, including their U.S. flights, are not counted.</li>
+    </ul>
+    <h3>Sources</h3>
+    <ul>
+      <li><a href="https://www.bts.gov/topics/airlines-and-airports/origin-and-destination-survey-data-market">BTS DB1C Market data</a> and <a href="https://www.bts.gov/sites/bts.dot.gov/files/DB1C_Description_for_Market.pdf">record description</a></li>
+      <li><a href="https://www.bts.gov/topics/airlines-and-airports/origin-and-destination-survey-data">BTS Origin and Destination Survey overview</a></li>
+      <li>Code, full results, diagnostics, and detailed methods are in this site’s GitHub repository (README and METHODS.md).</li>
+    </ul>
+  </div>
+</dialog>
+
+<script>
+const DATA = __DATA__; // [rank, city market 1, city market 2, 12-month journeys, avg daily each way, % with stops]
+const LABELS = __COLUMNS__;
+const COLS = [
+  { cls: "num rank", num: true }, { cls: "city" }, { cls: "city" },
+  { cls: "num big", num: true }, { cls: "num", num: true }, { cls: "num", num: true },
+].map((c, i) => ({ ...c, label: LABELS[i] }));
+const fmt = n => n.toLocaleString("en-US");
+const pct = n => n.toFixed(1) + "%";
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const phone = matchMedia("(max-width: 600px)");
+let sortCol = 0, asc = true, query = "";
+
+function hl(text) {
+  const i = query ? text.toLowerCase().indexOf(query) : -1;
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + query.length)) + "</mark>" + esc(text.slice(i + query.length));
+}
+
+function cell(r, i) {
+  if (i === 1 || i === 2) return hl(r[i]);
+  if (i === 0) return r[0];
+  if (i === 5) return pct(r[5]);
+  return fmt(r[i]);
+}
+
+function card(r) {
+  return `<li class="card"><span class="rk">${r[0]}</span>
+    <div class="pair">${hl(r[1])}<span class="dash">–</span>${hl(r[2])}</div>
+    <div class="tot"><b>${fmt(r[3])}</b> journeys in 12 months</div>
+    <div class="stats"><span><b>${fmt(r[4])}</b> a day each way</span><span><b>${pct(r[5])}</b> with stops</span></div></li>`;
+}
+
+function renderHead() {
+  document.getElementById("head").innerHTML = COLS.map((c, i) => {
+    const sorted = i === sortCol;
+    const aria = sorted ? ` aria-sort="${asc ? "ascending" : "descending"}"` : "";
+    return `<th class="${c.cls}"${aria}><button data-i="${i}">${esc(c.label)}<span class="arrow">${sorted ? (asc ? "▲" : "▼") : ""}</span></button></th>`;
+  }).join("");
+  document.querySelectorAll("th button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (i === sortCol) asc = !asc;
+    else { sortCol = i; asc = i === 0 || !COLS[i].num; }
+    render();
+    document.querySelector(`th button[data-i="${i}"]`).focus();  // header was rebuilt; keep keyboard focus
+  });
+}
+
+function render() {
+  const rows = DATA.filter(r => !query || r[1].toLowerCase().includes(query) || r[2].toLowerCase().includes(query));
+  rows.sort((a, b) => {
+    const x = a[sortCol], y = b[sortCol];
+    const o = typeof x === "number" ? x - y : x.localeCompare(y);
+    return (asc ? o : -o) || a[0] - b[0];
+  });
+  const none = `No city pairs match “${esc(query)}”.`;
+  if (phone.matches) {
+    document.getElementById("cards").innerHTML = rows.length ? rows.map(card).join("") : `<li class="empty">${none}</li>`;
+  } else {
+    renderHead();
+    document.getElementById("body").innerHTML = rows.length
+      ? rows.map(r => "<tr>" + COLS.map((c, i) => `<td class="${c.cls}">${cell(r, i)}</td>`).join("") + "</tr>").join("")
+      : `<tr><td class="empty" colspan="${COLS.length}">${none}</td></tr>`;
+  }
+  const opt = `${sortCol}:${asc ? "asc" : "desc"}`;
+  const sel = document.getElementById("sort");
+  if ([...sel.options].some(o => o.value === opt)) sel.value = opt;
+  document.getElementById("count").textContent =
+    rows.length === DATA.length ? `${DATA.length} pairs` : `${rows.length} of ${DATA.length} pairs`;
+}
+
+document.getElementById("q").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); render(); });
+document.getElementById("sort").addEventListener("change", e => {
+  const [c, d] = e.target.value.split(":"); sortCol = +c; asc = d === "asc"; render();
+});
+phone.addEventListener("change", render);
+const about = document.getElementById("about");
+document.getElementById("about-open").onclick = e => { e.preventDefault(); about.showModal(); };
+document.getElementById("about-close").onclick = () => about.close();
+about.addEventListener("click", e => { if (e.target === about) about.close(); });
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+﻿Rank,City market 1,City market 2,"Annual traffic, both ways",Connecting O&D traffic,Nonstop O&D traffic*,Percent connecting
+1,New York City,Miami - Fort Lauderdale,"7,101,200","111,508","6,989,692",1.6%
+2,Los Angeles,San Francisco Bay Area,"6,833,538","20,503","6,813,035",0.3%
+3,New York City,Orlando,"5,219,760","118,003","5,101,757",2.3%
+4,New York City,Los Angeles,"4,928,735","501,023","4,427,712",10.2%
+5,New York City,Chicago,"4,230,520","43,470","4,187,050",1.0%
+6,New York City,Atlanta,"3,721,593","45,300","3,676,293",1.2%
+7,New York City,San Francisco Bay Area,"3,348,010","293,713","3,054,297",8.8%
+8,Los Angeles,Las Vegas,"3,203,550","9,980","3,193,570",0.3%
+9,New York City,West Palm Beach,"2,816,398","31,228","2,785,170",1.1%
+10,Los Angeles,Seattle,"2,801,880","133,683","2,668,197",4.8%
+11,San Francisco Bay Area,San Diego,"2,715,845","17,363","2,698,482",0.6%
+12,New York City,Dallas,"2,591,668","73,935","2,517,733",2.9%
+13,San Francisco Bay Area,Las Vegas,"2,554,418","57,963","2,496,455",2.3%
+14,Los Angeles,Dallas,"2,511,095","150,403","2,360,692",6.0%
+15,Los Angeles,Chicago,"2,395,425","227,158","2,168,267",9.5%
+16,Washington - Baltimore,Orlando,"2,391,058","67,715","2,323,343",2.8%
+17,Washington - Baltimore,Miami - Fort Lauderdale,"2,346,973","105,105","2,241,868",4.5%
+18,Miami - Fort Lauderdale,Atlanta,"2,346,543","32,425","2,314,118",1.4%
+19,Washington - Baltimore,Greater Boston,"2,329,340","17,573","2,311,767",0.8%
+20,New York City,Tampa Bay,"2,326,078","91,795","2,234,283",3.9%
+21,Los Angeles,Denver,"2,293,145","55,865","2,237,280",2.4%
+22,Los Angeles,Phoenix,"2,283,308","10,520","2,272,788",0.5%
+23,San Francisco Bay Area,Seattle,"2,260,355","11,090","2,249,265",0.5%
+24,Washington - Baltimore,Atlanta,"2,044,150","16,608","2,027,542",0.8%
+25,Chicago,Orlando,"2,035,898","51,333","1,984,565",2.5%
+26,Chicago,Miami - Fort Lauderdale,"2,003,515","77,868","1,925,647",3.9%
+27,Orlando,Greater Boston,"1,973,885","133,460","1,840,425",6.8%
+28,Los Angeles,Sacramento,"1,968,870","15,245","1,953,625",0.8%
+29,Chicago,Washington - Baltimore,"1,888,153","39,603","1,848,550",2.1%
+30,New York City,Houston,"1,875,458","112,803","1,762,655",6.0%
+31,Los Angeles,Washington - Baltimore,"1,856,910","479,073","1,377,837",25.8%
+32,Chicago,Dallas,"1,831,353","36,650","1,794,703",2.0%
+33,New York City,Las Vegas,"1,830,330","141,000","1,689,330",7.7%
+34,New York City,Denver,"1,723,740","50,385","1,673,355",2.9%
+35,Miami - Fort Lauderdale,Greater Boston,"1,699,713","145,893","1,553,820",8.6%
+36,Chicago,Greater Boston,"1,694,950","27,090","1,667,860",1.6%
+37,Los Angeles,Honolulu,"1,680,480","65,428","1,615,052",3.9%
+38,Chicago,Phoenix,"1,663,475","45,415","1,618,060",2.7%
+39,Los Angeles,Houston,"1,644,395","154,228","1,490,167",9.4%
+40,New York City,San Juan,"1,632,590","43,630","1,588,960",2.7%
+41,New York City,Charlotte,"1,609,985","21,750","1,588,235",1.4%
+42,Chicago,Atlanta,"1,609,378","17,028","1,592,350",1.1%
+43,Los Angeles,"Portland, OR","1,577,370","167,710","1,409,660",10.6%
+44,Washington - Baltimore,Dallas,"1,573,508","71,588","1,501,920",4.5%
+45,Orlando,Philadelphia,"1,553,343","39,660","1,513,683",2.6%
+46,Denver,Phoenix,"1,539,225","13,823","1,525,402",0.9%
+47,Chicago,San Francisco Bay Area,"1,537,920","135,268","1,402,652",8.8%
+48,Chicago,Denver,"1,518,045","19,518","1,498,527",1.3%
+49,San Francisco Bay Area,Phoenix,"1,505,593","45,738","1,459,855",3.0%
+50,Dallas,Atlanta,"1,504,880","16,160","1,488,720",1.1%
+51,Chicago,Las Vegas,"1,501,123","55,708","1,445,415",3.7%
+52,New York City,Detroit,"1,484,225","23,798","1,460,427",1.6%
+53,Dallas,Denver,"1,470,148","11,033","1,459,115",0.8%
+54,Honolulu,Kahului - Maui,"1,465,868","1,178","1,464,690",0.1%
+55,New York City,Raleigh - Durham,"1,458,508","39,458","1,419,050",2.7%
+56,Los Angeles,Salt Lake City,"1,450,773","81,188","1,369,585",5.6%
+57,New York City,Greater Boston,"1,409,960","3,863","1,406,097",0.3%
+58,Los Angeles,Miami - Fort Lauderdale,"1,400,505","263,068","1,137,437",18.8%
+59,Orlando,Dallas,"1,398,718","56,175","1,342,543",4.0%
+60,New York City,Phoenix,"1,396,715","144,073","1,252,642",10.3%
+61,Los Angeles,Greater Boston,"1,396,638","317,998","1,078,640",22.8%
+62,Miami - Fort Lauderdale,Philadelphia,"1,393,990","43,665","1,350,325",3.1%
+63,Dallas,Las Vegas,"1,383,115","42,238","1,340,877",3.1%
+64,Orlando,San Juan,"1,368,745","18,585","1,350,160",1.4%
+65,New York City,Nashville,"1,367,715","56,923","1,310,792",4.2%
+66,Miami - Fort Lauderdale,Dallas,"1,332,740","83,343","1,249,397",6.3%
+67,Los Angeles,Atlanta,"1,328,405","225,598","1,102,807",17.0%
+68,San Francisco Bay Area,Denver,"1,328,153","38,410","1,289,743",2.9%
+69,San Francisco Bay Area,Greater Boston,"1,303,773","160,883","1,142,890",12.3%
+70,Washington - Baltimore,Denver,"1,296,033","84,925","1,211,108",6.6%
+71,Chicago,Houston,"1,291,205","42,493","1,248,712",3.3%
+72,Phoenix,Seattle,"1,261,988","24,698","1,237,290",2.0%
+73,San Francisco Bay Area,Washington - Baltimore,"1,261,905","271,800","990,105",21.5%
+74,New York City,Seattle,"1,257,170","74,288","1,182,882",5.9%
+75,New York City,Fort Myers,"1,223,720","40,013","1,183,707",3.3%
+76,Denver,Las Vegas,"1,208,025","24,225","1,183,800",2.0%
+77,Los Angeles,Orlando,"1,189,738","266,170","923,568",22.4%
+78,New York City,Austin,"1,188,255","167,810","1,020,445",14.1%
+79,San Francisco Bay Area,Dallas,"1,179,033","127,040","1,051,993",10.8%
+80,Orlando,Detroit,"1,171,865","77,508","1,094,357",6.6%
+81,Orlando,Atlanta,"1,146,855","10,348","1,136,507",0.9%
+82,Chicago,Tampa Bay,"1,142,410","50,433","1,091,977",4.4%
+83,Miami - Fort Lauderdale,Detroit,"1,140,370","84,723","1,055,647",7.4%
+84,Washington - Baltimore,Tampa Bay,"1,129,638","68,025","1,061,613",6.0%
+85,Dallas,Phoenix,"1,128,793","26,983","1,101,810",2.4%
+86,New York City,San Diego,"1,128,168","112,720","1,015,448",10.0%
+87,Washington - Baltimore,Houston,"1,126,703","65,093","1,061,610",5.8%
+88,Atlanta,Houston,"1,126,033","18,533","1,107,500",1.6%
+89,Las Vegas,Seattle,"1,117,735","22,700","1,095,035",2.0%
+90,Miami - Fort Lauderdale,Houston,"1,117,643","41,570","1,076,073",3.7%
+91,San Francisco Bay Area,"Portland, OR","1,089,373","12,363","1,077,010",1.1%
+92,Orlando,Houston,"1,083,045","43,460","1,039,585",4.0%
+93,Denver,Houston,"1,082,953","21,135","1,061,818",2.0%
+94,Atlanta,Greater Boston,"1,067,733","81,175","986,558",7.6%
+95,San Francisco Bay Area,Honolulu,"1,057,940","77,520","980,420",7.3%
+96,New York City,Washington - Baltimore,"1,057,673","6,350","1,051,323",0.6%
+97,Honolulu,Kona - Hawaii Island,"1,036,263","1,635","1,034,628",0.2%
+98,Los Angeles,Austin,"1,022,985","174,030","848,955",17.0%
+99,Phoenix,Minneapolis - St. Paul,"1,007,323","40,473","966,850",4.0%
+100,Chicago,Fort Myers,"1,007,113","22,425","984,688",2.2%

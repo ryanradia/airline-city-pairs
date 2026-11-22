@@ -1,0 +1,101 @@
+﻿Rank,City market 1,City market 2,"Annual traffic, both ways",Connecting O&D traffic,Nonstop O&D traffic*,Percent connecting
+1,New York City,Miami - Fort Lauderdale,7101200,111508,6989692,1.6%
+2,Los Angeles,San Francisco Bay Area,6833538,20503,6813035,0.3%
+3,New York City,Orlando,5219760,118003,5101757,2.3%
+4,New York City,Los Angeles,4928735,501023,4427712,10.2%
+5,New York City,Chicago,4230520,43470,4187050,1.0%
+6,New York City,Atlanta,3721593,45300,3676293,1.2%
+7,New York City,San Francisco Bay Area,3348010,293713,3054297,8.8%
+8,Los Angeles,Las Vegas,3203550,9980,3193570,0.3%
+9,New York City,West Palm Beach,2816398,31228,2785170,1.1%
+10,Los Angeles,Seattle,2801880,133683,2668197,4.8%
+11,San Francisco Bay Area,San Diego,2715845,17363,2698482,0.6%
+12,New York City,Dallas,2591668,73935,2517733,2.9%
+13,San Francisco Bay Area,Las Vegas,2554418,57963,2496455,2.3%
+14,Los Angeles,Dallas,2511095,150403,2360692,6.0%
+15,Los Angeles,Chicago,2395425,227158,2168267,9.5%
+16,Washington - Baltimore,Orlando,2391058,67715,2323343,2.8%
+17,Washington - Baltimore,Miami - Fort Lauderdale,2346973,105105,2241868,4.5%
+18,Miami - Fort Lauderdale,Atlanta,2346543,32425,2314118,1.4%
+19,Washington - Baltimore,Greater Boston,2329340,17573,2311767,0.8%
+20,New York City,Tampa Bay,2326078,91795,2234283,3.9%
+21,Los Angeles,Denver,2293145,55865,2237280,2.4%
+22,Los Angeles,Phoenix,2283308,10520,2272788,0.5%
+23,San Francisco Bay Area,Seattle,2260355,11090,2249265,0.5%
+24,Washington - Baltimore,Atlanta,2044150,16608,2027542,0.8%
+25,Chicago,Orlando,2035898,51333,1984565,2.5%
+26,Chicago,Miami - Fort Lauderdale,2003515,77868,1925647,3.9%
+27,Orlando,Greater Boston,1973885,133460,1840425,6.8%
+28,Los Angeles,Sacramento,1968870,15245,1953625,0.8%
+29,Chicago,Washington - Baltimore,1888153,39603,1848550,2.1%
+30,New York City,Houston,1875458,112803,1762655,6.0%
+31,Los Angeles,Washington - Baltimore,1856910,479073,1377837,25.8%
+32,Chicago,Dallas,1831353,36650,1794703,2.0%
+33,New York City,Las Vegas,1830330,141000,1689330,7.7%
+34,New York City,Denver,1723740,50385,1673355,2.9%
+35,Miami - Fort Lauderdale,Greater Boston,1699713,145893,1553820,8.6%
+36,Chicago,Greater Boston,1694950,27090,1667860,1.6%
+37,Los Angeles,Honolulu,1680480,65428,1615052,3.9%
+38,Chicago,Phoenix,1663475,45415,1618060,2.7%
+39,Los Angeles,Houston,1644395,154228,1490167,9.4%
+40,New York City,San Juan,1632590,43630,1588960,2.7%
+41,New York City,Charlotte,1609985,21750,1588235,1.4%
+42,Chicago,Atlanta,1609378,17028,1592350,1.1%
+43,Los Angeles,"Portland, OR",1577370,167710,1409660,10.6%
+44,Washington - Baltimore,Dallas,1573508,71588,1501920,4.5%
+45,Orlando,Philadelphia,1553343,39660,1513683,2.6%
+46,Denver,Phoenix,1539225,13823,1525402,0.9%
+47,Chicago,San Francisco Bay Area,1537920,135268,1402652,8.8%
+48,Chicago,Denver,1518045,19518,1498527,1.3%
+49,San Francisco Bay Area,Phoenix,1505593,45738,1459855,3.0%
+50,Dallas,Atlanta,1504880,16160,1488720,1.1%
+51,Chicago,Las Vegas,1501123,55708,1445415,3.7%
+52,New York City,Detroit,1484225,23798,1460427,1.6%
+53,Dallas,Denver,1470148,11033,1459115,0.8%
+54,Honolulu,Kahului - Maui,1465868,1178,1464690,0.1%
+55,New York City,Raleigh - Durham,1458508,39458,1419050,2.7%
+56,Los Angeles,Salt Lake City,1450773,81188,1369585,5.6%
+57,New York City,Greater Boston,1409960,3863,1406097,0.3%
+58,Los Angeles,Miami - Fort Lauderdale,1400505,263068,1137437,18.8%
+59,Orlando,Dallas,1398718,56175,1342543,4.0%
+60,New York City,Phoenix,1396715,144073,1252642,10.3%
+61,Los Angeles,Greater Boston,1396638,317998,1078640,22.8%
+62,Miami - Fort Lauderdale,Philadelphia,1393990,43665,1350325,3.1%
+63,Dallas,Las Vegas,1383115,42238,1340877,3.1%
+64,Orlando,San Juan,1368745,18585,1350160,1.4%
+65,New York City,Nashville,1367715,56923,1310792,4.2%
+66,Miami - Fort Lauderdale,Dallas,1332740,83343,1249397,6.3%
+67,Los Angeles,Atlanta,1328405,225598,1102807,17.0%
+68,San Francisco Bay Area,Denver,1328153,38410,1289743,2.9%
+69,San Francisco Bay Area,Greater Boston,1303773,160883,1142890,12.3%
+70,Washington - Baltimore,Denver,1296033,84925,1211108,6.6%
+71,Chicago,Houston,1291205,42493,1248712,3.3%
+72,Phoenix,Seattle,1261988,24698,1237290,2.0%
+73,San Francisco Bay Area,Washington - Baltimore,1261905,271800,990105,21.5%
+74,New York City,Seattle,1257170,74288,1182882,5.9%
+75,New York City,Fort Myers,1223720,40013,1183707,3.3%
+76,Denver,Las Vegas,1208025,24225,1183800,2.0%
+77,Los Angeles,Orlando,1189738,266170,923568,22.4%
+78,New York City,Austin,1188255,167810,1020445,14.1%
+79,San Francisco Bay Area,Dallas,1179033,127040,1051993,10.8%
+80,Orlando,Detroit,1171865,77508,1094357,6.6%
+81,Orlando,Atlanta,1146855,10348,1136507,0.9%
+82,Chicago,Tampa Bay,1142410,50433,1091977,4.4%
+83,Miami - Fort Lauderdale,Detroit,1140370,84723,1055647,7.4%
+84,Washington - Baltimore,Tampa Bay,1129638,68025,1061613,6.0%
+85,Dallas,Phoenix,1128793,26983,1101810,2.4%
+86,New York City,San Diego,1128168,112720,1015448,10.0%
+87,Washington - Baltimore,Houston,1126703,65093,1061610,5.8%
+88,Atlanta,Houston,1126033,18533,1107500,1.6%
+89,Las Vegas,Seattle,1117735,22700,1095035,2.0%
+90,Miami - Fort Lauderdale,Houston,1117643,41570,1076073,3.7%
+91,San Francisco Bay Area,"Portland, OR",1089373,12363,1077010,1.1%
+92,Orlando,Houston,1083045,43460,1039585,4.0%
+93,Denver,Houston,1082953,21135,1061818,2.0%
+94,Atlanta,Greater Boston,1067733,81175,986558,7.6%
+95,San Francisco Bay Area,Honolulu,1057940,77520,980420,7.3%
+96,New York City,Washington - Baltimore,1057673,6350,1051323,0.6%
+97,Honolulu,Kona - Hawaii Island,1036263,1635,1034628,0.2%
+98,Los Angeles,Austin,1022985,174030,848955,17.0%
+99,Phoenix,Minneapolis - St. Paul,1007323,40473,966850,4.0%
+100,Chicago,Fort Myers,1007113,22425,984688,2.2%
