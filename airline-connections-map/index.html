@@ -27,8 +27,18 @@
   .side { position:fixed; top:var(--head); right:0; bottom:0; width:var(--side); z-index:4; background:#fff; border-left:1px solid var(--line);
           display:flex; flex-direction:column; font-size:13px; line-height:1.45; }
   .bar { display:flex; gap:8px; padding:12px 14px 8px; }
-  #q { flex:1; min-width:0; padding:8px 10px; border:1px solid #c5ccd3; border-radius:8px; }
-  #explore { display:none; }
+  .combo { position:relative; flex:1; min-width:0; display:flex; }
+  #q { flex:1; min-width:0; padding:8px 10px; border:1px solid #c5ccd3; border-right:0; border-radius:8px 0 0 8px; }
+  #qbtn { flex:none; width:40px; border:1px solid #c5ccd3; border-radius:0 8px 8px 0; background:#fff; color:var(--muted); cursor:pointer; font-size:14px; }
+  #qbtn:hover { background:#f4f6f8; }
+  #sugg { position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:30; margin:0; padding:4px 0; list-style:none; background:#fff;
+          border:1px solid #c5ccd3; border-radius:8px; box-shadow:0 6px 18px #0002; max-height:60vh; overflow-y:auto; }
+  #sugg[hidden] { display:none; }
+  #sugg li { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:7px 10px; cursor:pointer; }
+  #sugg li .ap { color:var(--muted); font-size:12px; text-align:right; }
+  #sugg li:hover, #sugg li[aria-selected="true"] { background:#eef4fb; }
+  #sugg .none { color:var(--muted); cursor:default; }
+  #explore, #handle { display:none; }
   .side-body { flex:1; min-height:0; overflow-y:auto; padding:0 14px 14px; }
   .controls { display:flex; gap:6px; margin:2px 0 10px; }
   .seg { display:flex; flex:1; border:1px solid #c5ccd3; border-radius:6px; overflow:hidden; }
@@ -117,10 +127,19 @@
     .top { min-height:58px; } .top h1 { font-size:13.5px; padding:7px 0; }
     .tabs button { padding:6px 10px; min-height:44px; }
     .view { right:0; bottom:var(--bar); }
-    .side { top:auto; left:0; width:auto; border-left:0; border-radius:14px 14px 0 0; box-shadow:0 -2px 14px #0003; max-height:var(--bar); }
+    .side { top:auto; left:0; width:auto; border-left:0; border-radius:14px 14px 0 0; box-shadow:0 -2px 14px #0003; }
     .side.open { max-height:62vh; }
     .bar { padding:10px 10px; }
+    .side.has-sel .bar { padding-top:0; }
     #q { font-size:16px; min-height:44px; }   /* 16px stops iOS zooming in on focus */
+    #qbtn { width:44px; }
+    #sugg { top:auto; bottom:calc(100% + 6px); max-height:50vh; }   /* opens upward from the bottom bar */
+    #sugg li { min-height:44px; }
+    /* arrow at the top of the sheet: slide the results down to see the map, or back up */
+    .side.has-sel #handle { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; min-height:44px; border:0;
+                            background:none; color:var(--muted); font-size:12.5px; cursor:pointer; padding:0; }
+    #handle svg { width:22px; height:22px; transition:transform .2s; }
+    .side.open #handle svg { transform:rotate(180deg); }
     #explore { display:block; min-height:44px; min-width:92px; }
     .side:not(.open) .side-body { display:none; }
     .side-body { padding:0 12px 12px; display:flex; flex-direction:column; }
@@ -176,9 +195,14 @@
 </div>
 
 <aside class="side" id="side" aria-label="Search and results">
+  <button id="handle" aria-expanded="true" aria-controls="side-body"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="handle-text"></span></button>
   <div class="bar">
-    <input id="q" list="names" placeholder="City or airport code, e.g. DCA" autocomplete="off" aria-label="Find a city market or airport">
-    <datalist id="names"></datalist>
+    <div class="combo">
+      <input id="q" placeholder="City or airport code, e.g. DCA" autocomplete="off" role="combobox" aria-autocomplete="list"
+             aria-expanded="false" aria-controls="sugg" aria-label="Find a city market or airport">
+      <button id="qbtn" aria-label="Show all city markets" aria-expanded="false" aria-controls="sugg">▾</button>
+      <ul id="sugg" role="listbox" aria-label="City markets" hidden></ul>
+    </div>
     <button class="btn primary" id="explore" aria-expanded="false" aria-controls="side-body">Explore</button>
   </div>
   <div class="side-body" id="side-body">
@@ -476,7 +500,8 @@ map.on('load', async () => {
     S.pinned = i === null ? false : pin;
     if (changed) { S.sel = i; S.hp = null; S.all = false; drawPoints(); drawAreas(); drawArcs(true); legend(); }
     renderInfo();
-    if (S.pinned && phone()) openSheet(true);
+    if (S.pinned && phone() && changed) openSheet(true);
+    else openSheet($('side').classList.contains('open'));   // refresh the sheet's arrow and label
     if (changed && hovered !== null && lastEvt && tip.style.display === 'block') refreshTip();
     if (fly && i !== null) requestAnimationFrame(fitSelection);
     syncURL(); heatOverlay();
@@ -569,8 +594,6 @@ map.on('load', async () => {
   }));
   $('reset').addEventListener('click', () => { select(null, { pin:false }); showTab('map'); map.fitBounds(HOME, { padding:homePadding(), duration:900 }); });
   const byName = Object.fromEntries(M.map((m, i) => [m.name.toLowerCase(), i]));
-  $('names').innerHTML = M.map(m => `<option value="${m.name}">`).join('')
-    + M.flatMap(m => m.airports.map(a => `<option value="${a}">${a} · ${m.name}</option>`)).join('');
   const q = $('q');
   function findMarket(s) {
     const v = s.trim().toLowerCase();
@@ -580,22 +603,76 @@ map.on('load', async () => {
     if (ap >= 0) return ap;
     return M.findIndex(m => m.name.toLowerCase().includes(v));
   }
+  function pick(i) {
+    q.value = M[i].name; q.style.borderColor = ''; closeSugg();
+    showTab('map'); select(i, { pin:true, fly:true }); q.blur();
+  }
   const go = () => {
     const i = findMarket(q.value);
     if (i < 0) { q.style.borderColor = '#b42318'; return; }
-    showTab('map'); select(i, { pin:true, fly:true }); q.blur();
+    pick(i);
   };
-  q.addEventListener('change', go);
-  q.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
-  q.addEventListener('input', () => q.style.borderColor = '');
+
+  // search suggestions: all 100 markets by rank, filtered by name or airport code as you type
+  const sugg = $('sugg');
+  let opts = [], active = -1;
+  function matches(s) {
+    const v = s.trim().toLowerCase();
+    if (!v) return M.map((_, i) => i);
+    const code = M.map((m, i) => i).filter(i => M[i].airports.some(a => a.toLowerCase().startsWith(v)));
+    const name = M.map((m, i) => i).filter(i => M[i].name.toLowerCase().includes(v) && !code.includes(i));
+    return [...code, ...name];
+  }
+  function openSugg(list) {
+    opts = list; active = -1;
+    sugg.innerHTML = list.length ? list.map((i, k) => `<li role="option" id="opt${k}" data-i="${i}" aria-selected="false"><span>${M[i].name}</span><span class="ap">${M[i].airports.join(', ')}</span></li>`).join('')
+      : '<li class="none" role="option" aria-disabled="true">No matching city or airport</li>';
+    sugg.hidden = false; q.setAttribute('aria-expanded', 'true'); $('qbtn').setAttribute('aria-expanded', 'true');
+    sugg.scrollTop = 0;
+  }
+  function closeSugg() {
+    sugg.hidden = true; active = -1; q.setAttribute('aria-expanded', 'false'); $('qbtn').setAttribute('aria-expanded', 'false');
+    q.removeAttribute('aria-activedescendant');
+  }
+  function setActive(k) {
+    if (!opts.length) return;
+    active = (k + opts.length) % opts.length;
+    sugg.querySelectorAll('li').forEach((li, n) => li.setAttribute('aria-selected', String(n === active)));
+    const li = $('opt' + active); li.scrollIntoView({ block:'nearest' }); q.setAttribute('aria-activedescendant', li.id);
+  }
+  sugg.addEventListener('mousedown', e => e.preventDefault());   // keep focus in the box
+  sugg.addEventListener('click', e => { const li = e.target.closest('li[data-i]'); if (li) pick(+li.dataset.i); });
+  $('qbtn').addEventListener('mousedown', e => e.preventDefault());
+  $('qbtn').addEventListener('click', () => {
+    if (!sugg.hidden) return closeSugg();
+    openSugg(findMarket(q.value) === S.sel ? matches('') : matches(q.value));   // the full list unless a search is half-typed
+  });
+  q.addEventListener('input', () => { q.style.borderColor = ''; openSugg(matches(q.value)); });
+  q.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (sugg.hidden) openSugg(matches(q.value)); setActive(active + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(active - 1); }
+    else if (e.key === 'Enter') { e.preventDefault(); active >= 0 ? pick(opts[active]) : go(); }
+    else if (e.key === 'Escape') { closeSugg(); e.stopPropagation(); }
+  });
+  document.addEventListener('pointerdown', e => { if (!e.target.closest('.combo')) closeSugg(); });
 
   // ---------- phone sheet
   function openSheet(open) {
     $('side').classList.toggle('open', open);
+    $('side').classList.toggle('has-sel', S.sel !== null && S.pinned);
     $('explore').textContent = open ? 'Close' : 'Explore';
     $('explore').setAttribute('aria-expanded', String(open));
+    $('handle').setAttribute('aria-expanded', String(open));
+    $('handle').setAttribute('aria-label', open ? 'Slide results down to see the map' : 'Show results');
+    $('handle-text').textContent = open || S.sel === null ? '' : `Show ${M[S.sel].name}`;
   }
   $('explore').addEventListener('click', () => openSheet(!$('side').classList.contains('open')));
+  $('handle').addEventListener('click', () => {
+    const open = !$('side').classList.contains('open');
+    openSheet(open);
+    // re-center on the selection: use the freed-up space when sliding down; refit only if needed when sliding up
+    if (S.sel !== null) requestAnimationFrame(() => fitIds([S.sel, ...drawn()], !open));
+  });
 
   // ---------- tabs
   function showTab(t) {
