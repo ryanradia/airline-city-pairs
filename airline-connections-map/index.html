@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Air Travel Connections Among the Top 100 U.S. City Markets</title>
+<meta name="description" content="Interactive map and matrix of domestic air journeys between the 100 busiest U.S. city markets, July 2025–June 2026, from the BTS DB1C Market survey.">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+  :root { --ink:#1f2933; --muted:#52606d; --line:#d9dee3; --arc:#eb6834; --sel:#26313b; }
+  html, body { margin:0; height:100%; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); background:#f2f3f0; }
+  #map { position:absolute; inset:0; }
+  button { font:inherit; }
+  .panel { position:absolute; z-index:2; top:12px; left:12px; width:350px; max-width:calc(100vw - 24px); max-height:calc(100vh - 24px);
+           box-sizing:border-box; display:flex; flex-direction:column; background:#fffffff5; padding:12px 14px; border-radius:8px;
+           box-shadow:0 2px 12px #0002; font-size:13px; line-height:1.45; }
+  .panel > *, .body > * { flex-shrink:0; }
+  .panel > .body, .body > #info { flex-shrink:1; }
+  .panel h1 { font-size:15px; margin:0; }
+  .date { font-size:12px; color:var(--muted); margin:0 0 6px; }
+  .sub { color:var(--muted); margin-bottom:8px; }
+  .sub .short { display:none; }
+  .body { display:flex; flex-direction:column; min-height:0; }
+  #handle { display:none; }
+  /* legend */
+  .lg-title { font-size:12px; font-weight:600; margin:2px 0 2px; }
+  .lg-title .muted { font-weight:400; }
+  .sizes { display:flex; align-items:flex-end; gap:14px; margin:2px 0 6px; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .sizes div { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .sizes span { display:block; border-radius:50%; background:#2a78d6b3; border:1px solid #fff; box-shadow:0 0 0 1px #2a78d6; }
+  .scale { display:flex; height:12px; border-radius:3px; overflow:hidden; }
+  .scale span { flex:1; }
+  .ticks { position:relative; height:15px; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; margin-bottom:4px; }
+  .ticks span { position:absolute; top:1px; transform:translateX(-50%); white-space:nowrap; }
+  .lg-lines { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:6px; margin:2px 0 4px; }
+  .lg-lines i { display:inline-block; width:26px; height:0; border-top:3px solid var(--arc); border-radius:2px; }
+  .lg-lines i.gray { border-top-color:#8a96a3; border-top-width:2px; }
+  .controls { display:flex; gap:6px; align-items:center; margin:6px 0 8px; }
+  .seg { display:flex; flex:1; border:1px solid #c5ccd3; border-radius:6px; overflow:hidden; }
+  .seg button { flex:1; border:0; background:#fff; padding:5px 0; color:var(--muted); cursor:pointer; }
+  .seg button + button { border-left:1px solid #c5ccd3; }
+  .seg button[aria-pressed="true"] { background:var(--ink); color:#fff; font-weight:600; }
+  .btn { border:1px solid #c5ccd3; background:#fff; border-radius:6px; padding:5px 9px; color:var(--ink); cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#f4f6f8; }
+  .btn[aria-pressed="true"] { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .row2 { display:flex; gap:6px; margin-bottom:8px; }
+  .row2 .btn { flex:1; }
+  #q { width:100%; box-sizing:border-box; padding:6px 8px; border:1px solid #ccd; border-radius:6px; font:inherit; }
+  /* selected market */
+  #info { margin-top:8px; border-top:1px solid #e4e7eb; padding-top:8px; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  #info h2 { font-size:15px; margin:0; display:flex; align-items:baseline; gap:6px; }
+  #info h2 button { margin-left:auto; border:0; background:none; font-size:18px; line-height:1; cursor:pointer; color:var(--muted); }
+  .meta { color:var(--muted); font-size:12px; margin:2px 0 6px; }
+  .pin { font-size:11px; color:var(--muted); font-weight:400; }
+  #list { overflow-y:auto; min-height:0; margin:0 -4px; }
+  #list table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+  #list th { position:sticky; top:0; background:#fff; font-size:11px; font-weight:600; color:var(--muted); text-align:right; padding:2px 4px; }
+  #list th:nth-child(2) { text-align:left; }
+  #list td { padding:2px 4px; text-align:right; white-space:nowrap; }
+  #list td:nth-child(2) { text-align:left; white-space:normal; }
+  #list td:first-child, #list th:first-child { color:var(--muted); width:1%; }
+  #list tr.row { cursor:pointer; }
+  #list tr.row:hover td, #list tr.hl td { background:#fdeee7; }
+  #list tr.cut td { border-top:1px dashed #c5ccd3; }
+  .barcell { width:56px; }
+  .bar { height:8px; background:var(--arc); border-radius:0 2px 2px 0; }
+  .empty { color:var(--muted); }
+  .note { color:var(--muted); font-size:12px; margin-top:8px; }
+  .note a, #about a { color:#1d5fa8; }
+  #status { color:var(--muted); font-size:12px; margin-top:6px; }
+  /* tooltip (map and matrix) */
+  #tip { position:fixed; z-index:20; pointer-events:none; background:#fff; border-radius:6px; box-shadow:0 2px 10px #0003;
+         padding:7px 10px; font-size:12.5px; line-height:1.4; max-width:270px; display:none; }
+  .muted { color:var(--muted); }
+  /* matrix */
+  #mx { position:absolute; z-index:3; top:12px; right:12px; background:#fffffff8; border-radius:8px; box-shadow:0 2px 16px #0003;
+        padding:10px 12px 10px; font-size:12px; }
+  #mx[hidden] { display:none; }
+  #mx .mx-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  #mx h2 { font-size:14px; margin:0; }
+  #mx .seg { flex:none; font-size:12px; }
+  #mx .seg button { padding:3px 10px; white-space:nowrap; }
+  #mx .x { margin-left:auto; border:0; background:none; font-size:20px; line-height:1; cursor:pointer; color:var(--muted); }
+  .mx-body { display:flex; gap:6px; }
+  .mx-labels { position:relative; width:96px; font-size:11px; color:var(--muted); }
+  .mx-labels span { position:absolute; right:0; transform:translateY(-50%); text-align:right; line-height:1.15; }
+  .mx-wrap { position:relative; }
+  .mx-wrap canvas { display:block; }
+  #mxo { position:absolute; inset:0; cursor:crosshair; }
+  .mx-foot { display:flex; align-items:center; gap:8px; margin-top:6px; color:var(--muted); font-size:11px; }
+  .mx-foot .scale { width:220px; height:10px; }
+  .mx-foot .ticks { width:220px; height:13px; margin:0; }
+  /* dialog */
+  #about { width:min(680px, calc(100vw - 32px)); max-height:calc(100vh - 48px); box-sizing:border-box; padding:0;
+           border:0; border-radius:10px; box-shadow:0 10px 40px #0005; color:var(--ink); }
+  #about::backdrop { background:#1f293366; }
+  #about .head { position:sticky; top:0; display:flex; align-items:center; padding:14px 20px; background:#fff; border-bottom:1px solid #e4e7eb; }
+  #about .head h2 { font-size:17px; margin:0; }
+  #about .head button { margin-left:auto; border:0; background:none; font-size:22px; line-height:1; cursor:pointer; color:var(--muted); }
+  #about .content { padding:4px 20px 20px; font-size:14px; line-height:1.55; }
+  #about h3 { font-size:14px; margin:18px 0 4px; }
+  #about p, #about ul { margin:4px 0 8px; }
+  #about ul { padding-left:20px; }
+  /* phones: bottom sheet */
+  @media (max-width:600px) {
+    .panel { top:auto; bottom:0; left:0; right:0; width:auto; max-width:none; max-height:52vh; border-radius:14px 14px 0 0;
+             padding:4px 12px 10px; font-size:12px; line-height:1.35; box-shadow:0 -2px 14px #0003; }
+    #handle { display:block; width:100%; border:0; background:none; padding:4px 0 6px; cursor:pointer; }
+    #handle::before { content:""; display:block; width:40px; height:4px; border-radius:2px; background:#c5ccd3; margin:0 auto; }
+    .panel h1 { font-size:13px; }
+    .date { font-size:11px; margin-bottom:4px; }
+    .sub .long { display:none; } .sub .short { display:inline; }
+    .sub { margin-bottom:4px; }
+    #q { font-size:16px; padding:4px 8px; }   /* 16px stops iOS zooming in on focus */
+    .panel.collapsed .body { display:none; }
+    .body { overflow-y:auto; overscroll-behavior:contain; }
+    .body > #info, #list { flex-shrink:0; overflow:visible; }
+    .controls { margin:4px 0 6px; } .row2 { margin-bottom:6px; } .row2 .btn, .seg button { padding:4px 0; }
+    .sizes { margin-bottom:2px; }
+    .maplibregl-ctrl-top-right { display:none; }
+    .maplibregl-ctrl-bottom-right, .maplibregl-ctrl-bottom-left { bottom:var(--sheet, 0px); }
+    #mx { top:0; right:0; left:0; bottom:0; border-radius:0; overflow:auto; background:#fff; }
+    .mx-labels { width:64px; font-size:10px; }
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel" id="panel">
+  <button id="handle" aria-label="Show or hide panel" aria-expanded="true"></button>
+  <h1>Air travel between the 100 busiest U.S. city markets</h1>
+  <div class="date" id="period">July 2025–June 2026</div>
+  <div class="body">
+    <div class="sub">
+      <span class="long">Domestic origin–destination air journeys, both directions combined, connecting trips included. Rest the pointer on a city market to see its connections with the other 99; click to keep it selected.</span>
+      <span class="short">Domestic O&amp;D air journeys, both directions. Tap a city market to see its connections with the other 99.</span>
+    </div>
+    <div id="legend"></div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Number of connections drawn">
+        <button data-n="10" aria-pressed="true">Top 10</button><button data-n="25" aria-pressed="false">Top 25</button><button data-n="99" aria-pressed="false">All 99</button>
+      </div>
+    </div>
+    <div class="row2">
+      <button class="btn" id="mx-open" aria-pressed="false">Matrix view</button>
+      <button class="btn" id="reset">Reset map</button>
+    </div>
+    <input id="q" list="names" placeholder="Find a city market or airport, e.g. Denver" autocomplete="off">
+    <datalist id="names"></datalist>
+    <div id="info"></div>
+    <div class="note"><a href="#" id="about-open">Methodology &amp; sources</a></div>
+    <div id="status">Loading data…</div>
+  </div>
+</div>
+
+<div id="mx" hidden>
+  <div class="mx-head">
+    <h2>Journeys between the 100 markets</h2>
+    <div class="seg" role="group" aria-label="Matrix order">
+      <button data-order="region" aria-pressed="true">By region</button><button data-order="rank" aria-pressed="false">By rank</button>
+    </div>
+    <button class="x" id="mx-close" aria-label="Close matrix">×</button>
+  </div>
+  <div class="mx-body">
+    <div class="mx-labels" id="mx-labels"></div>
+    <div class="mx-wrap"><canvas id="mxc"></canvas><canvas id="mxo"></canvas></div>
+  </div>
+  <div class="mx-foot">
+    <div><div class="scale" id="mx-scale"></div><div class="ticks" id="mx-ticks"></div></div>
+    <span>Each row and column is a market; the matrix is symmetric. Click a cell to show that pair on the map.</span>
+  </div>
+</div>
+<div id="tip"></div>
+
+<dialog id="about">
+  <div class="head"><h2>Methodology &amp; sources</h2><button id="about-close" aria-label="Close">×</button></div>
+  <div class="content">
+    <p>The map shows the 100 busiest U.S. domestic air city markets and the passenger journeys between every pair of them: 4,950 pairs in all. The matrix view shows the same 4,950 pairs as a grid. It uses the same data and definitions as the top 100 city-pairs table.</p>
+    <h3>What is counted</h3>
+    <ul>
+      <li>Each BTS DB1C Market record is one passenger origin–destination journey within BTS market boundaries. A New York–Atlanta–Orlando connection counts only between New York and Orlando.</li>
+      <li>Both directions are combined, and a round trip normally counts once in each direction. These are journeys, not unique people.</li>
+      <li>DB1C is a 40% ticket sample; each sampled record is multiplied by 2.5. The 12 monthly files for reporting months July 2025–June 2026 are summed.</li>
+      <li>Trips that start and end in the same city market are excluded. Domestic includes Alaska, Hawaii, and U.S. territories; trips on international tickets are not counted.</li>
+    </ul>
+    <h3>Choosing the 100 markets</h3>
+    <ul>
+      <li>A city market's total is the sum of its journeys with every other market (all 1,000+ markets, not just the top 100). The 100 largest totals are mapped.</li>
+      <li>Pairs among these 100 markets carry 88% of all domestic journeys. A few pairs (183) have no sampled journeys and show as 0.</li>
+      <li>"% of total" is the pair's share of the selected market's total journeys, including its journeys to markets outside the top 100. "With stops" is the share of the pair's journeys with a change of flight (two or more flight coupons).</li>
+    </ul>
+    <h3>Reading the map</h3>
+    <ul>
+      <li>Circles sit at each market's airports (weighted by traffic). With no market selected, circle area shows the market's total journeys. With a market selected, circle area shows journeys with that market, scaled so its largest connection is the biggest circle, and color shows the share of the selected market's journeys.</li>
+      <li>Lines curve between markets; width shows journeys and tapers from the selected market toward the other end. With nothing selected, gray lines show the 25 busiest pairs.</li>
+      <li>The matrix groups markets by Census region of their main airport (Alaska and Hawaii, and Puerto Rico and the U.S. Virgin Islands, are shown separately), or orders them by rank.</li>
+    </ul>
+    <h3>Geography</h3>
+    <ul>
+      <li>Airports are grouped using BTS city markets, as in the table (e.g., New York City = JFK, EWR, LGA, HPN, ISP, SWF; Los Angeles = LAX, SNA, BUR, ONT, LGB). Orlando Sanford (SFB) and West Palm Beach (PBI) are separate BTS markets.</li>
+      <li>The shaded areas are the Census Bureau's 2025 core-based statistical areas (CBSAs; metropolitan and micropolitan areas) that contain each market's airports, the same boundaries used in the <a href="https://ryanradia.github.io/housingcost/" target="_blank" rel="noopener">housing cost map</a>. Airports with under 0.25% of a market's journeys don't add an area.</li>
+      <li>Where two markets have airports in the same CBSA, the CBSA is split by county: a county with an airport goes to that airport's market, and the rest go to the larger market. This affects three CBSAs: Miami (Palm Beach County → West Palm Beach), Orlando (Seminole County → Sanford), and Riverside–San Bernardino (San Bernardino County → Los Angeles via ONT; Riverside County → Palm Springs).</li>
+      <li>St. Thomas is in no CBSA and is drawn as St. Thomas Island. A market's area shows where its airports are, not where its travelers live.</li>
+    </ul>
+    <h3>Sources</h3>
+    <ul>
+      <li><a href="https://www.bts.gov/topics/airlines-and-airports/origin-and-destination-survey-data-market" target="_blank" rel="noopener">BTS DB1C Market data</a> and <a href="https://www.bts.gov/sites/bts.dot.gov/files/DB1C_Description_for_Market.pdf" target="_blank" rel="noopener">record description</a></li>
+      <li>CBSA and county boundaries: U.S. Census Bureau, 2025 cartographic boundary files (cb_2025_us_cbsa_500k, cb_2025_us_county_500k)</li>
+      <li>Airport locations: BTS National Transportation Atlas Database, Aviation Facilities; FAA airport reference points for PBI and AZA</li>
+      <li>Basemap: <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> (Positron style) © OpenMapTiles © OpenStreetMap contributors, rendered with <a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre GL JS</a></li>
+    </ul>
+  </div>
+</dialog>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+// ---------- constants
+const BLUES = ['#b7d3f6', '#86b6ef', '#5598e7', '#2a78d6', '#1c5cab', '#104281'];   // share of selected market's journeys
+const SHARE_CUTS = [0.005, 0.01, 0.02, 0.04, 0.08];
+const MX_BLUES = ['#e3eefc', '#b7d3f6', '#86b6ef', '#5598e7', '#2a78d6', '#1c5cab', '#0d366b'];   // matrix, log bins
+const MX_CUTS = [1e4, 3e4, 1e5, 3e5, 1e6, 3e6];
+const MX_ZERO = '#f4f5f7';
+const SEL = '#26313b', ARC = '#eb6834', ARC_LIGHT = '#f7c2a9', GRAY_LINE = '#8a96a3', BUBBLE = '#2a78d6';
+const AREA = '#dde3ea', AREA_PARTNER = '#fbe0d3', AREA_SEL = '#b8c1cb';
+const R_MAX = 26, R_MAX_SEL = 24;   // circle radius (px at zoom 4) for the largest value
+const HOVER_DELAY = 150, LEAVE_DELAY = 300, DRAW_MS = 420;
+const HOME = [[-125, 24.5], [-66.5, 49.5]];
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const short = n => n >= 1e6 ? +(n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : String(Math.round(n));
+const pct = r => (r * 100).toFixed(1) + '%';
+const $ = id => document.getElementById(id);
+const wide = () => window.innerWidth > 600;
+const zoomFactor = z => z <= 2 ? 0.7 : z <= 4 ? 0.7 + 0.15 * (z - 2) : z <= 7 ? 1 + 0.2 * (z - 4) : 1.6;
+const binOf = (v, cuts) => cuts.filter(c => v >= c).length;
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, t) => '#' + hex(a).map((x, k) => Math.round(x + (hex(b)[k] - x) * t).toString(16).padStart(2, '0')).join('');
+function nice(v) { const p = 10 ** Math.floor(Math.log10(v)); return [5, 2, 1].map(m => m * p).find(x => x <= v); }
+
+function unpack(g) {
+  return g.map(poly => poly.map(r => {
+    const out = []; let x = 0, y = 0;
+    for (let j = 0; j < r.length; j += 2) { x += r[j]; y += r[j + 1]; out.push([x / 1e4, y / 1e4]); }
+    return out;
+  }));
+}
+
+// curved line in Web Mercator space: a quadratic Bezier bent to the left of the a -> b direction
+const merc = ([lng, lat]) => [lng, Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) * 180 / Math.PI];
+const unmerc = ([x, y]) => [x, (2 * Math.atan(Math.exp(y * Math.PI / 180)) - Math.PI / 2) * 180 / Math.PI];
+function curve(a, b, steps = 32, bend = 0.2) {
+  const p = merc(a), q = merc(b), dx = q[0] - p[0], dy = q[1] - p[1];
+  const c = [(p[0] + q[0]) / 2 - dy * bend, (p[1] + q[1]) / 2 + dx * bend];
+  const out = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps, u = 1 - t;
+    out.push(unmerc([u * u * p[0] + 2 * u * t * c[0] + t * t * q[0], u * u * p[1] + 2 * u * t * c[1] + t * t * q[1]]));
+  }
+  return out;
+}
+
+// ---------- map
+const map = new maplibregl.Map({
+  container:'map',
+  style:'https://tiles.openfreemap.org/styles/positron',
+  bounds:HOME,
+  fitBoundsOptions:{ padding:homePadding() },
+  maxBounds:[[-250, -60], [10, 82]],
+  minZoom:1.5, maxZoom:10,
+  dragRotate:false, pitchWithRotate:false,
+  attributionControl:{ compact:!wide() },
+});
+map.touchZoomRotate.disableRotation();
+map.addControl(new maplibregl.NavigationControl({ showCompass:false }), 'top-right');
+
+function panelPadding() {
+  const p = $('panel');
+  return wide() ? { top:30, bottom:30, left:p.offsetWidth + 40, right:40 }
+                : { top:30, bottom:p.offsetHeight + 20, left:20, right:20 };
+}
+function homePadding() { return wide() ? { top:20, bottom:20, left:380, right:20 } : { top:20, bottom:Math.min(window.innerHeight * 0.45, 330), left:10, right:10 }; }
+
+const data = fetch('markets.json').then(r => {
+  if (!r.ok) throw new Error(`Could not load markets.json (HTTP ${r.status}).`);
+  return r.json();
+});
+data.catch(err => { $('status').textContent = err.message; $('status').style.color = '#b42318'; });
+
+map.on('load', async () => {
+  const D = await data;
+  const M = D.markets, N = M.length;
+  const [p0, p1] = D.period.split('_to_').map(s => s.split('-'));
+  const month = ([y, m]) => new Date(+y, +m - 1).toLocaleString('en-US', { month:'long' }) + ' ' + y;
+  $('period').textContent = `${month(p0)}–${month(p1)}`;
+
+  // matrix of journeys and share connecting; each market's partners sorted once
+  const J = new Float64Array(N * N), C = new Float64Array(N * N);
+  D.pairs.forEach(([i, j, t, c]) => { J[i * N + j] = J[j * N + i] = t; C[i * N + j] = C[j * N + i] = c; });
+  const P = M.map((_, i) => [...Array(N).keys()].filter(j => j !== i).sort((a, b) => J[i * N + b] - J[i * N + a] || a - b));
+  const rankIn = M.map((_, i) => { const r = new Int16Array(N); P[i].forEach((j, k) => r[j] = k + 1); return r; });
+  const maxTotal = Math.max(...M.map(m => m.total));
+  const top25 = D.pairs.slice().sort((a, b) => b[2] - a[2]).slice(0, 25);
+
+  // ---------- state
+  const S = { sel:null, pinned:false, hp:null, n:10, hover:null };
+  const drawn = () => S.sel === null ? [] : P[S.sel].slice(0, S.n).filter(j => J[S.sel * N + j] > 0);
+
+  // ---------- sources and layers
+  const fc = f => ({ type:'FeatureCollection', features:f });
+  map.addSource('mkts', { type:'geojson', data:fc(M.map((m, i) => ({ type:'Feature', id:i, properties:{ i },
+    geometry:{ type:'MultiPolygon', coordinates:unpack(m.g) } }))) });
+  map.addSource('pts', { type:'geojson', data:fc([]) });
+  map.addSource('arcs', { type:'geojson', data:fc([]) });
+
+  if (map.getLayer('landuse_residential')) map.setLayoutProperty('landuse_residential', 'visibility', 'none');
+  map.getStyle().layers.forEach(l => {   // market labels replace the basemap's city and town names
+    if (l.type === 'symbol' && l['source-layer'] === 'place' && !/country|state|continent/.test(l.id)) map.setLayoutProperty(l.id, 'visibility', 'none');
+  });
+  const role = ['coalesce', ['feature-state', 'role'], 0];
+  map.addLayer({ id:'area', type:'fill', source:'mkts',
+    paint:{ 'fill-color':['match', role, 2, AREA_SEL, 1, AREA_PARTNER, AREA], 'fill-opacity':0.9,
+            'fill-color-transition':{ duration:250 } } }, 'water');
+  map.addLayer({ id:'area-edge', type:'line', source:'mkts', paint:{ 'line-color':'#ffffff', 'line-width':0.8 } }, 'water');
+  map.addLayer({ id:'area-hover', type:'line', source:'mkts',
+    paint:{ 'line-color':SEL, 'line-width':1.6, 'line-opacity':['case', ['boolean', ['feature-state', 'hover'], false], 0.9, 0] } });
+  map.addLayer({ id:'arc-casing', type:'line', source:'arcs', layout:{ 'line-cap':'round', 'line-join':'round' },
+    paint:{ 'line-color':'#ffffff', 'line-width':['+', ['get', 'w'], 2] } });
+  map.addLayer({ id:'arc', type:'line', source:'arcs', layout:{ 'line-cap':'round', 'line-join':'round', 'line-sort-key':['get', 'z'] },
+    paint:{ 'line-color':['get', 'c'], 'line-width':['get', 'w'] } });
+  const radius = ['interpolate', ['linear'], ['zoom'], 2, ['*', ['get', 'r'], 0.7], 4, ['get', 'r'], 7, ['*', ['get', 'r'], 1.6]];
+  map.addLayer({ id:'bubble', type:'circle', source:'pts', layout:{ 'circle-sort-key':['get', 'sk'] },
+    paint:{ 'circle-radius':radius, 'circle-color':['get', 'c'], 'circle-opacity':['case', ['get', 'z'], 0, ['get', 'sel'], 1, 0.82],
+            'circle-stroke-color':['case', ['get', 'z'], '#9aa5b1', '#ffffff'], 'circle-stroke-width':['case', ['get', 'sel'], 2, 1] } });
+  const labelLayout = { 'text-field':['get', 'name'], 'text-font':['Noto Sans Bold'], 'text-size':['interpolate', ['linear'], ['zoom'], 3, 10.5, 7, 13],
+    'text-variable-anchor':['top', 'bottom', 'left', 'right'], 'text-radial-offset':['+', 0.4, ['/', ['get', 'r'], 11]],
+    'text-max-width':9, 'symbol-sort-key':['get', 'lk'], 'text-padding':2 };
+  const labelPaint = { 'text-color':SEL, 'text-halo-color':'#fff', 'text-halo-width':1.6 };
+  // national zoom: top 25 plus the selected market and the partners drawn; zoomed in: everything
+  map.addLayer({ id:'label-key', type:'symbol', source:'pts', maxzoom:5.5, filter:['get', 'key'], layout:labelLayout, paint:labelPaint });
+  map.addLayer({ id:'label-all', type:'symbol', source:'pts', minzoom:5.5, layout:labelLayout, paint:labelPaint });
+
+  // ---------- circles
+  function drawPoints() {
+    const i = S.sel, d = new Set(drawn());
+    let maxv = 1;
+    if (i !== null) maxv = J[i * N + P[i][0]] || 1;
+    map.getSource('pts').setData(fc(M.map((m, j) => {
+      let r, c, z = false, sel = false;
+      if (i === null) { r = Math.max(3, R_MAX * Math.sqrt(m.total / maxTotal)); c = BUBBLE; }
+      else if (j === i) { r = 7; c = SEL; sel = true; }
+      else {
+        const v = J[i * N + j];
+        if (v > 0) { r = Math.max(2.5, R_MAX_SEL * Math.sqrt(v / maxv)); c = BLUES[binOf(v / M[i].total, SHARE_CUTS)]; }
+        else { r = 2; c = '#ffffff'; z = true; }
+      }
+      const key = i === null ? m.rank <= 25 : (j === i || d.has(j) || m.rank <= 12);
+      return { type:'Feature', properties:{ i:j, name:m.name, r, c, z, sel, sk:sel ? 1e9 : -r, lk:sel ? -1 : d.has(j) ? rankIn[i][j] : 100 + m.rank, key },
+        geometry:{ type:'Point', coordinates:[m.lng, m.lat] } };
+    })));
+  }
+
+  // ---------- lines: curved, tapered (drawn as short segments), animated in
+  const K = 8, STEPS = 32;
+  const cache = new Map();
+  const geom = (a, b) => { const k = a * N + b; if (!cache.has(k)) cache.set(k, curve([M[a].lng, M[a].lat], [M[b].lng, M[b].lat], STEPS)); return cache.get(k); };
+  let anim = null;
+  function arcFeatures(progress) {
+    const feats = [];
+    if (S.sel === null) {
+      const max = top25[0][2];
+      top25.slice().reverse().forEach(([a, b, t], k) => {
+        const pts = geom(a, b), end = Math.max(2, Math.ceil(progress * STEPS) + 1);
+        feats.push({ type:'Feature', properties:{ w:0.8 + 4 * Math.sqrt(t / max), c:GRAY_LINE, z:k }, geometry:{ type:'LineString', coordinates:pts.slice(0, end) } });
+      });
+      return feats;
+    }
+    const i = S.sel, list = drawn();
+    if (S.hp !== null && S.hp !== i && !list.includes(S.hp) && J[i * N + S.hp] > 0) list.push(S.hp);
+    const max = J[i * N + P[i][0]] || 1;
+    list.sort((a, b) => J[i * N + a] - J[i * N + b]).forEach((j, z) => {
+      const t = J[i * N + j], s = Math.sqrt(t / max), w = 1 + 9 * s, pts = geom(i, j);
+      const c = j === S.hp ? SEL : mix(ARC_LIGHT, ARC, Math.min(1, 0.25 + s));
+      const shown = progress * STEPS, per = STEPS / K;
+      for (let k = 0; k < K; k++) {
+        const a = k * per; if (a >= shown) break;
+        const b = Math.min((k + 1) * per, Math.ceil(shown));
+        feats.push({ type:'Feature', properties:{ w:w * (1 - 0.65 * k / (K - 1)), c, z:j === S.hp ? 1e6 : z * K + k },
+          geometry:{ type:'LineString', coordinates:pts.slice(a, b + 1) } });
+      }
+    });
+    return feats;
+  }
+  function drawArcs(animate) {
+    if (anim) cancelAnimationFrame(anim), anim = null;
+    if (!animate) { map.getSource('arcs').setData(fc(arcFeatures(1))); return; }
+    const t0 = performance.now();
+    const frame = now => {
+      const p = Math.min(1, (now - t0) / DRAW_MS), e = 1 - (1 - p) ** 3;
+      map.getSource('arcs').setData(fc(arcFeatures(e)));
+      anim = p < 1 ? requestAnimationFrame(frame) : null;
+    };
+    anim = requestAnimationFrame(frame);
+  }
+
+  // ---------- areas
+  let roles = new Array(N).fill(0);
+  function drawAreas() {
+    const d = new Set(drawn());
+    M.forEach((_, j) => {
+      const r = j === S.sel ? 2 : d.has(j) ? 1 : 0;
+      if (r !== roles[j]) { map.setFeatureState({ source:'mkts', id:j }, { role:r }); roles[j] = r; }
+    });
+  }
+
+  // ---------- legend
+  function legend() {
+    const z = zoomFactor(map.getZoom()), i = S.sel;
+    const circle = (v, max, R) => Math.max(2, R * Math.sqrt(v / max) * z);
+    let html;
+    if (i === null) {
+      const vals = [nice(maxTotal), nice(maxTotal / 5), nice(maxTotal / 25)];
+      html = `<div class="lg-title">Circle area: total journeys <span class="muted">(with all domestic markets)</span></div>
+        <div class="sizes">${vals.map(v => { const r = circle(v, maxTotal, R_MAX); return `<div><span style="width:${2 * r}px;height:${2 * r}px"></span>${short(v)}</div>`; }).join('')}</div>
+        <div class="lg-lines"><i class="gray"></i>The 25 busiest pairs</div>`;
+    } else {
+      const max = J[i * N + P[i][0]] || 1, vals = [nice(max), nice(max / 5), nice(max / 25)];
+      html = `<div class="lg-title">Circle area: journeys with ${M[i].name}</div>
+        <div class="sizes">${vals.map(v => { const r = circle(v, max, R_MAX_SEL); return `<div><span style="width:${2 * r}px;height:${2 * r}px;background:#5598e7cc;box-shadow:0 0 0 1px #5598e7"></span>${short(v)}</div>`; }).join('')}</div>
+        <div class="lg-title">Color: share of ${M[i].name}'s journeys</div>
+        <div class="scale">${BLUES.map(c => `<span style="background:${c}"></span>`).join('')}</div>
+        <div class="ticks">${SHARE_CUTS.map((c, k) => `<span style="left:${(k + 1) / BLUES.length * 100}%">${c * 100}%</span>`).join('')}</div>
+        <div class="lg-lines"><i></i>Top ${S.n === 99 ? 'all 99' : S.n} connections; width shows journeys</div>`;
+    }
+    $('legend').innerHTML = html;
+  }
+  map.on('zoomend', legend);
+
+  // ---------- side list
+  function renderInfo() {
+    const i = S.sel;
+    if (i === null) {
+      $('info').innerHTML = `<div class="empty">Rest the pointer on a market, tap it, or search to see its connections with the other 99.</div>`;
+      return;
+    }
+    const m = M[i], ps = P[i], max = J[i * N + ps[0]] || 1;
+    const inTop = ps.reduce((s, j) => s + J[i * N + j], 0);
+    $('info').innerHTML = `<h2>${m.name} <span class="pin">${S.pinned ? 'selected' : ''}</span>
+        ${S.pinned ? '<button id="clear" aria-label="Clear selection">×</button>' : ''}</h2>
+      <div class="meta">#${m.rank} of 100 · ${fmt(m.total)} journeys with all markets, ${pct(inTop / m.total)} with these 99<br>
+        Airports: ${m.airports.join(', ')}<br>${m.areas.join('; ')}</div>
+      <div id="list"><table><thead><tr><th>#</th><th>Connection</th><th>Journeys</th><th title="Share of ${m.name}'s journeys">% of total</th><th title="Share of journeys with a change of flight">With stops</th><th class="barcell"></th></tr></thead><tbody>
+      ${ps.map((j, r) => { const t = J[i * N + j]; return `<tr class="row${r === S.n ? ' cut' : ''}" data-j="${j}"><td>${r + 1}</td><td>${M[j].name}</td><td>${fmt(t)}</td>
+        <td>${pct(t / m.total)}</td><td>${t ? pct(C[i * N + j]) : '–'}</td><td class="barcell"><div class="bar" style="width:${t / max * 100}%"></div></td></tr>`; }).join('')}
+      </tbody></table></div>`;
+    $('list').querySelectorAll('tr.row').forEach(tr => {
+      const j = +tr.dataset.j;
+      tr.addEventListener('click', () => select(j, { pin:true, fly:true }));
+      tr.addEventListener('mouseenter', () => setPartner(j));
+      tr.addEventListener('mouseleave', () => setPartner(null));
+    });
+    const c = $('clear'); if (c) c.addEventListener('click', () => select(null, { pin:false }));
+  }
+
+  // ---------- selection
+  function select(i, { pin = S.pinned, fly = false } = {}) {
+    const changed = i !== S.sel;
+    S.pinned = i === null ? false : pin;
+    if (changed) { S.sel = i; S.hp = null; drawPoints(); drawAreas(); drawArcs(true); legend(); }
+    renderInfo();
+    if (changed && hovered !== null && lastEvt && tip.style.display === 'block') refreshTip();
+    if (fly && i !== null) fitSelection();
+    mxOverlay();
+  }
+  function setPartner(j) {
+    if (j === S.hp) return;
+    S.hp = j;
+    drawArcs(false);
+    document.querySelectorAll('#list tr.hl').forEach(tr => tr.classList.remove('hl'));
+    if (j !== null) { const tr = document.querySelector(`#list tr[data-j="${j}"]`); if (tr) tr.classList.add('hl'); }
+    mxOverlay();
+  }
+  // move the camera only when some of the drawn lines are off screen
+  function fitSelection() {
+    const ids = [S.sel, ...drawn()];
+    const b = new maplibregl.LngLatBounds();
+    ids.forEach(j => b.extend([M[j].lng, M[j].lat]));
+    const pad = panelPadding(), w = map.getCanvas().clientWidth, h = map.getCanvas().clientHeight;
+    const off = ids.some(j => { const p = map.project([M[j].lng, M[j].lat]);
+      return p.x < pad.left || p.x > w - pad.right || p.y < pad.top || p.y > h - pad.bottom; });
+    if (off) map.fitBounds(b, { padding:pad, maxZoom:6, duration:900 });
+  }
+
+  // ---------- pointer: hover intent, tooltip
+  const tip = $('tip');
+  function showTip(x, y, html) {
+    tip.innerHTML = html; tip.style.display = 'block';
+    const r = tip.getBoundingClientRect();
+    tip.style.left = Math.min(x + 14, window.innerWidth - r.width - 8) + 'px';
+    tip.style.top = (y + 14 + r.height > window.innerHeight ? y - r.height - 10 : y + 14) + 'px';
+  }
+  const hideTip = () => tip.style.display = 'none';
+  const pairHtml = (i, j) => { const t = J[i * N + j];
+    return `<b>${M[i].name} ↔ ${M[j].name}</b><br>${fmt(t)} journeys${t ? ` · ${pct(C[i * N + j])} with stops` : ''}<br>
+      <span class="muted">#${rankIn[i][j]} of ${M[i].name}'s 99 connections · #${rankIn[j][i]} of ${M[j].name}'s</span>`; };
+  const marketHtml = j => `<b>${M[j].name}</b><br>${fmt(M[j].total)} journeys · #${M[j].rank} of 100<br>
+      <span class="muted">${S.pinned ? 'Click to select instead' : 'Click to keep selected'}</span>`;
+
+  let timer = null, hovered = null, raf = null, lastEvt = null;
+  const later = (fn, ms) => { clearTimeout(timer); timer = setTimeout(fn, ms); };
+  function marketAt(point) {
+    const f = map.queryRenderedFeatures(point, { layers:['bubble', 'area'] });
+    if (!f.length) return null;
+    const b = f.find(x => x.layer.id === 'bubble');
+    return b ? b.properties.i : f[0].properties.i;
+  }
+  function onMove() {
+    raf = null;
+    const e = lastEvt, j = marketAt(e.point);
+    if (j !== hovered) {
+      if (hovered !== null) map.setFeatureState({ source:'mkts', id:hovered }, { hover:false });
+      if (j !== null) map.setFeatureState({ source:'mkts', id:j }, { hover:true });
+      hovered = j;
+      map.getCanvas().style.cursor = j === null ? '' : 'pointer';
+      if (!S.pinned) {
+        if (j === null) { if (S.sel !== null) later(() => select(null), LEAVE_DELAY); else clearTimeout(timer); }
+        else if (j !== S.sel) later(() => select(j), S.sel === null ? 60 : HOVER_DELAY);
+        else clearTimeout(timer);
+      }
+    }
+    if (j === null) { hideTip(); if (S.pinned) setPartner(null); return; }
+    refreshTip();
+  }
+  function refreshTip() {
+    const j = hovered, x = lastEvt.originalEvent.clientX, y = lastEvt.originalEvent.clientY;
+    if (S.sel !== null && j !== S.sel) { setPartner(j); showTip(x, y, pairHtml(S.sel, j)); }
+    else { setPartner(null); showTip(x, y, marketHtml(j)); }
+  }
+  map.on('mousemove', e => { lastEvt = e; if (!raf) raf = requestAnimationFrame(onMove); });
+  map.getCanvas().addEventListener('mouseleave', () => {
+    hideTip();
+    if (hovered !== null) map.setFeatureState({ source:'mkts', id:hovered }, { hover:false });
+    hovered = null;
+    if (!S.pinned) later(() => select(null), LEAVE_DELAY); else setPartner(null);
+  });
+  map.on('click', e => {
+    clearTimeout(timer);
+    const j = marketAt(e.point);
+    if (j === null) { select(null, { pin:false }); hideTip(); return; }
+    if (S.pinned && j === S.sel) { select(null, { pin:false }); return; }
+    select(j, { pin:true, fly:true });
+    if (!wide()) hideTip();
+  });
+  map.on('movestart', () => { if (!wide()) hideTip(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('about').open) { if (!$('mx').hidden) closeMatrix(); else select(null, { pin:false }); } });
+
+  // ---------- controls
+  document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => {
+    S.n = +b.dataset.n;
+    document.querySelectorAll('[data-n]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    if (S.sel !== null) { drawPoints(); drawAreas(); drawArcs(true); legend(); renderInfo(); if (S.pinned) fitSelection(); }
+  }));
+  $('reset').addEventListener('click', () => { select(null, { pin:false }); map.fitBounds(HOME, { padding:homePadding(), duration:900 }); });
+  const byName = Object.fromEntries(M.map((m, i) => [m.name.toLowerCase(), i]));
+  $('names').innerHTML = M.map(m => `<option value="${m.name}">`).join('');
+  const q = $('q');
+  const go = () => {
+    const v = q.value.trim().toLowerCase();
+    const i = v in byName ? byName[v] : M.findIndex(m => m.name.toLowerCase().includes(v) || m.airports.some(a => a.toLowerCase() === v));
+    if (!v || i < 0) { q.style.borderColor = '#b42318'; return; }
+    select(i, { pin:true, fly:true }); q.blur();
+  };
+  q.addEventListener('change', go);
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  q.addEventListener('input', () => q.style.borderColor = '');
+
+  // ---------- matrix view
+  const mxc = $('mxc'), mxo = $('mxo');
+  let order = [], cell = 5, groups = [];
+  function layoutOrder(mode) {
+    if (mode === 'rank') { order = [...Array(N).keys()]; groups = []; return; }
+    order = []; groups = [];
+    D.regions.forEach(r => {
+      const ids = M.map((m, i) => i).filter(i => M[i].region === r);
+      if (ids.length) { groups.push({ name:r, start:order.length, n:ids.length }); order.push(...ids); }
+    });
+  }
+  function drawMatrix() {
+    const availW = wide() ? window.innerWidth - $('panel').offsetWidth - 170 : window.innerWidth - 100;
+    const availH = window.innerHeight - (wide() ? 140 : 160);
+    cell = Math.max(3, Math.min(6, Math.floor(Math.min(availW, availH) / N)));
+    const px = cell * N, dpr = window.devicePixelRatio || 1;
+    for (const c of [mxc, mxo]) { c.width = px * dpr; c.height = px * dpr; c.style.width = c.style.height = px + 'px'; }
+    const g = mxc.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const a = order[r], b = order[c];
+      g.fillStyle = a === b ? '#ffffff' : J[a * N + b] > 0 ? MX_BLUES[binOf(J[a * N + b], MX_CUTS)] : MX_ZERO;
+      g.fillRect(c * cell, r * cell, cell, cell);
+    }
+    g.fillStyle = '#ffffff';
+    groups.slice(1).forEach(gr => { g.fillRect(0, gr.start * cell - 1, px, 2); g.fillRect(gr.start * cell - 1, 0, 2, px); });
+    const SHORT = { 'Alaska & Hawaii':'AK, HI', 'Puerto Rico & USVI':'PR, VI' };
+    const labels = groups.length ? groups.map(gr => [gr.n * cell < 30 && SHORT[gr.name] ? SHORT[gr.name] : gr.name, (gr.start + gr.n / 2) * cell])
+      : [1, 10, 25, 50, 75, 100].map(k => ['#' + k, (k - 0.5) * cell]);
+    $('mx-labels').style.height = px + 'px';
+    $('mx-labels').innerHTML = labels.map(([t, y]) => `<span style="top:${y}px">${t}</span>`).join('');
+    mxOverlay();
+  }
+  let mxHover = null;
+  function mxOverlay() {
+    if ($('mx').hidden) return;
+    const g = mxo.getContext('2d'), dpr = window.devicePixelRatio || 1, px = cell * N;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, px, px);
+    const pos = new Int16Array(N); order.forEach((m, k) => pos[m] = k);
+    if (S.sel !== null) {   // selected market's row and column
+      g.strokeStyle = ARC; g.lineWidth = 1.5;
+      g.strokeRect(0.75, pos[S.sel] * cell + 0.75, px - 1.5, cell - 1.5);
+      g.strokeRect(pos[S.sel] * cell + 0.75, 0.75, cell - 1.5, px - 1.5);
+    }
+    const hl = mxHover || (S.sel !== null && S.hp !== null ? [pos[S.sel], pos[S.hp]] : null);
+    if (hl) {
+      const [r, c] = hl;
+      g.fillStyle = '#1f293314'; g.fillRect(0, r * cell, px, cell); g.fillRect(c * cell, 0, cell, px);
+      g.strokeStyle = SEL; g.lineWidth = 2; g.strokeRect(c * cell - 1, r * cell - 1, cell + 2, cell + 2);
+    }
+  }
+  const cellAt = e => { const b = mxo.getBoundingClientRect(); const r = Math.floor((e.clientY - b.top) / cell), c = Math.floor((e.clientX - b.left) / cell);
+    return r >= 0 && r < N && c >= 0 && c < N ? [r, c] : null; };
+  mxo.addEventListener('mousemove', e => {
+    const rc = cellAt(e); mxHover = rc; mxOverlay();
+    if (!rc) return hideTip();
+    const [a, b] = [order[rc[0]], order[rc[1]]];
+    showTip(e.clientX, e.clientY, a === b ? `<b>${M[a].name}</b><br><span class="muted">${fmt(M[a].total)} journeys with all markets</span>` : pairHtml(a, b));
+  });
+  mxo.addEventListener('mouseleave', () => { mxHover = null; mxOverlay(); hideTip(); });
+  mxo.addEventListener('click', e => {
+    const rc = cellAt(e); if (!rc) return;
+    const [a, b] = [order[rc[0]], order[rc[1]]];
+    select(a, { pin:true, fly:a === b });
+    if (a !== b) {
+      setPartner(b);
+      const bb = new maplibregl.LngLatBounds([M[a].lng, M[a].lat], [M[a].lng, M[a].lat]).extend([M[b].lng, M[b].lat]);
+      if (wide()) map.fitBounds(bb, { padding:{ ...panelPadding(), right:$('mx').offsetWidth + 60 }, maxZoom:6, duration:900 });
+    }
+    if (!wide()) closeMatrix();
+  });
+  function openMatrix() { $('mx').hidden = false; $('mx-open').setAttribute('aria-pressed', 'true'); drawMatrix(); }
+  function closeMatrix() { $('mx').hidden = true; $('mx-open').setAttribute('aria-pressed', 'false'); hideTip(); }
+  $('mx-open').addEventListener('click', () => $('mx').hidden ? openMatrix() : closeMatrix());
+  $('mx-close').addEventListener('click', closeMatrix);
+  document.querySelectorAll('[data-order]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('[data-order]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    layoutOrder(b.dataset.order); drawMatrix();
+  }));
+  $('mx-scale').innerHTML = [MX_ZERO, ...MX_BLUES].map(c => `<span style="background:${c}"></span>`).join('');
+  $('mx-ticks').innerHTML = MX_CUTS.map((c, k) => `<span style="left:${(k + 2) / (MX_BLUES.length + 1) * 100}%">${short(c)}</span>`).join('')
+    + `<span style="left:${100 / (MX_BLUES.length + 1) / 2}%">0</span>`;
+  layoutOrder('region');
+  window.addEventListener('resize', () => { if (!$('mx').hidden) drawMatrix(); });
+
+  // ---------- start
+  $('status').remove();
+  drawPoints(); drawArcs(true); legend(); renderInfo();
+  const start = new URLSearchParams(location.search);
+  if (start.get('m')) { q.value = start.get('m'); go(); }
+  if (start.get('view') === 'matrix') openMatrix();
+});
+
+// ---------- dialog and phone sheet
+const about = $('about');
+$('about-open').addEventListener('click', e => { e.preventDefault(); about.showModal(); });
+$('about-close').addEventListener('click', () => about.close());
+about.addEventListener('click', e => { if (e.target === about) about.close(); });
+const sheet = () => document.documentElement.style.setProperty('--sheet', wide() ? '0px' : $('panel').offsetHeight + 'px');
+$('handle').addEventListener('click', e => {
+  const collapsed = $('panel').classList.toggle('collapsed');
+  e.currentTarget.setAttribute('aria-expanded', String(!collapsed));
+  sheet();
+});
+new ResizeObserver(sheet).observe($('panel'));
+</script>
+</body>
+</html>
