@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Where America Flies: Air Travel Among the Top 100 U.S. City Markets</title>
+<title>Domestic Air Journeys Between the 100 Busiest U.S. City Markets, July 2025–June 2026</title>
 <meta name="description" content="Interactive map and heatmap of domestic air journeys between the 100 busiest U.S. city markets, July 2025–June 2026, from the BTS DB1C Market survey.">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
 <style>
@@ -13,10 +13,9 @@
   html, body { margin:0; height:100%; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); background:#dcebf5; }
   button, input { font:inherit; }
   /* header */
-  .top { position:fixed; top:0; left:0; right:0; height:var(--head); z-index:5; display:flex; align-items:center; gap:18px;
+  .top { position:fixed; top:0; left:0; right:0; min-height:64px; z-index:5; display:flex; align-items:center; gap:18px;
          padding:0 18px; background:var(--teal); color:#fff; }
-  .top h1 { font-size:20px; margin:0; letter-spacing:.2px; white-space:nowrap; }
-  .top .scope { font-size:12.5px; color:#cfe3e8; line-height:1.3; }
+  .top h1 { font-size:19px; margin:0; padding:10px 0; letter-spacing:.2px; line-height:1.25; }
   .tabs { margin-left:auto; display:flex; gap:4px; background:#0b3a46; padding:3px; border-radius:8px; }
   .tabs button { border:0; background:none; color:#cfe3e8; padding:7px 16px; border-radius:6px; cursor:pointer; font-weight:600; min-height:36px; }
   .tabs button[aria-selected="true"] { background:#fff; color:var(--teal); }
@@ -114,10 +113,8 @@
   .maplibregl-ctrl-attrib { font-size:11px; }
   /* phones: slim bottom bar, collapsible results sheet */
   @media (max-width:700px) {
-    :root { --head:58px; }
     .top { gap:8px; padding:0 10px; }
-    .top h1 { font-size:16px; }
-    .top .scope { display:none; }
+    .top { min-height:58px; } .top h1 { font-size:13.5px; padding:7px 0; }
     .tabs button { padding:6px 10px; min-height:44px; }
     .view { right:0; bottom:var(--bar); }
     .side { top:auto; left:0; width:auto; border-left:0; border-radius:14px 14px 0 0; box-shadow:0 -2px 14px #0003; max-height:var(--bar); }
@@ -139,14 +136,13 @@
     .heat-key .scale, .heat-key .ticks { width:240px; }
     .maplibregl-ctrl-top-right { display:none; }
   }
-  @media (max-width:360px) { .top h1 { font-size:14px; } .tabs button { padding:6px 8px; } }
+  @media (max-width:360px) { .top h1 { font-size:12.5px; } .tabs button { padding:6px 8px; } }
 </style>
 </head>
 <body>
 <header class="top">
   <div>
-    <h1>Where America flies</h1>
-    <div class="scope" id="scope">Domestic air journeys between the 100 busiest U.S. city markets · July 2025–June 2026</div>
+    <h1 id="title">Domestic air journeys between the 100 busiest U.S. city markets · July 2025–June 2026</h1>
   </div>
   <div class="tabs" role="tablist" aria-label="View">
     <button role="tab" id="tab-map" aria-selected="true" aria-controls="map">Map</button>
@@ -306,7 +302,7 @@ map.on('load', async () => {
   const M = D.markets, N = M.length;
   const [p0, p1] = D.period.split('_to_').map(s => s.split('-'));
   const month = ([y, m]) => new Date(+y, +m - 1).toLocaleString('en-US', { month:'long' }) + ' ' + y;
-  $('scope').textContent = `Domestic air journeys between the 100 busiest U.S. city markets · ${month(p0)}–${month(p1)}`;
+  $('title').textContent = `Domestic air journeys between the 100 busiest U.S. city markets · ${month(p0)}–${month(p1)}`;
 
   const J = new Float64Array(N * N), C = new Float64Array(N * N);
   D.pairs.forEach(([i, j, t, c]) => { J[i * N + j] = J[j * N + i] = t; C[i * N + j] = C[j * N + i] = c; });
@@ -733,6 +729,9 @@ const about = $('about');
 $('about-open').addEventListener('click', e => { e.preventDefault(); about.showModal(); });
 $('about-close').addEventListener('click', () => about.close());
 about.addEventListener('click', e => { if (e.target === about) about.close(); });
+// header height follows the title, which wraps on narrow screens
+const fitHead = () => { document.documentElement.style.setProperty('--head', document.querySelector('.top').offsetHeight + 'px'); map.resize(); };
+new ResizeObserver(fitHead).observe(document.querySelector('.top'));
 </script>
 </body>
 </html>
